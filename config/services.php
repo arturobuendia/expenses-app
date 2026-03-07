@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    'whaas' => [
+        'url' => env('WHAAS_API_URL'),
+        'key' => env('WHAAS_API_KEY'),
+    ],
+
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+    ],
+
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+    ],
+
 ];
