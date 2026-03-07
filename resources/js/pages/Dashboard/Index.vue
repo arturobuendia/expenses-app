@@ -5,15 +5,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
+import { useFormatter } from '@/composables/useFormatter';
 import type { Totals, Vault, Subscription, Expense } from '@/types/finances';
 
+const { formatCurrency, formatDate, getMonthName } = useFormatter();
+
 defineProps<{
-    currentMonthName: string;
     totals: Totals;
     vaults: Vault[];
     upcomingSubscriptions: Subscription[];
     latestExpenses: Expense[];
 }>();
+
+const currentMonthName = getMonthName();
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,9 +26,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const formatCurrency = (value: number | string) => {
-    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Number(value));
-};
 </script>
 
 <template>
@@ -93,7 +94,7 @@ const formatCurrency = (value: number | string) => {
                             <div v-for="sub in upcomingSubscriptions" :key="sub.id" class="flex justify-between items-center">
                                 <div>
                                     <p class="font-medium text-zinc-200">{{ sub.name }}</p>
-                                    <p class="text-xs text-zinc-500">Cobro: {{ sub.next_billing_date }}</p>
+                                    <p class="text-xs text-zinc-500">Cobro: {{ formatDate(sub.next_billing_date) }}</p>
                                 </div>
                                 <span class="text-zinc-300">{{ formatCurrency(sub.amount) }}</span>
                             </div>
@@ -120,7 +121,7 @@ const formatCurrency = (value: number | string) => {
                                     </TableHeader>
                                     <TableBody>
                                         <TableRow v-for="expense in latestExpenses" :key="expense.id" class="border-zinc-800 hover:bg-zinc-800/50 transition-colors">
-                                            <TableCell class="whitespace-nowrap text-zinc-400">{{ expense.date }}</TableCell>
+                                            <TableCell class="whitespace-nowrap text-zinc-400">{{ formatDate(expense.date) }}</TableCell>
                                             <TableCell class="font-medium text-zinc-200">{{ expense.description }}</TableCell>
                                             <TableCell>
                                                 <span class="inline-flex items-center rounded-md bg-zinc-800 px-2 py-1 text-xs font-medium text-zinc-300 ring-1 ring-inset ring-zinc-700">
