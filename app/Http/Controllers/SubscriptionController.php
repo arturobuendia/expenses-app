@@ -10,11 +10,23 @@ class SubscriptionController extends Controller
 {
     public function index()
     {
-        // Traemos las suscripciones ordenadas por la fecha de próximo cobro
+        // Traemos todas las suscripciones
         $subscriptions = Subscription::orderBy('next_billing_date', 'asc')->get();
 
+        // Calculamos las métricas separando las activas de las pausadas
+        $activeSubs = $subscriptions->where('is_active', true);
+        $monthlyCost = $activeSubs->sum('amount');
+
+        $totals = [
+            'active_count' => $activeSubs->count(),
+            'monthly_cost' => $monthlyCost,
+            'annual_projection' => $monthlyCost * 12,
+            'paused_count' => $subscriptions->where('is_active', false)->count(),
+        ];
+
         return Inertia::render('Subscriptions/Index', [
-            'subscriptions' => $subscriptions,
+            'subscriptions' => $subscriptions->values(), // values() reindexa el array para Vue
+            'totals' => $totals,
         ]);
     }
 
