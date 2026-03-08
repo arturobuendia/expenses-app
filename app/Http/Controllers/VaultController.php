@@ -10,11 +10,41 @@ class VaultController extends Controller
 {
     public function index()
     {
-        // Traemos todas las bóvedas ordenadas por el saldo de mayor a menor
-        $vaults = Vault::orderByDesc('balance')->get();
+        // Traemos las bóvedas y calculamos sus rendimientos al vuelo
+        $vaults = Vault::orderByDesc('balance')->get()->map(function ($vault) {
+            $dailyYield = 0;
+            $monthlyYield = 0;
+
+            if ($vault->annual_yield_rate > 0) {
+                // Si hay tope y el saldo lo supera, calculamos solo sobre el tope
+                $effectiveBalance = ($vault->yield_cap && $vault->balance > $vault->yield_cap)
+                    ? $vault->yield_cap
+                    : $vault->balance;
+
+                // Cálculo de rendimientos
+                $annualYield = $effectiveBalance * ($vault->annual_yield_rate / 100);
+                $dailyYield = $annualYield / 365; // Estándar de 365 días
+                $monthlyYield = $annualYield / 12;
+            }
+
+            // Mutamos el objeto para agregarle estas propiedades virtuales
+            $vault->daily_yield = $dailyYield;
+            $vault->monthly_yield = $monthlyYield;
+
+            return $vault;
+        });
+
+        // Calculamos los totales generales para las tarjetas
+        $totals = [
+            'accounts' => $vaults->count(),
+            'capital' => $vaults->sum('balance'),
+            'daily_yield' => $vaults->sum('daily_yield'),
+            'monthly_yield' => $vaults->sum('monthly_yield'),
+        ];
 
         return Inertia::render('Vaults/Index', [
             'vaults' => $vaults,
+            'totals' => $totals,
         ]);
     }
 
