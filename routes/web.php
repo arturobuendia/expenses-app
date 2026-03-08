@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\VaultController;
+use App\Http\Controllers\SubscriptionController;
 
 Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -34,6 +35,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/vaults', [VaultController::class, 'store'])->name('vaults.store');
     Route::put('/vaults/{vault}', [VaultController::class, 'update'])->name('vaults.update');
     Route::delete('/vaults/{vault}', [VaultController::class, 'destroy'])->name('vaults.destroy');
+
+    // Suscripciones
+    Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+    Route::post('/subscriptions', [SubscriptionController::class, 'store'])->name('subscriptions.store');
+    Route::put('/subscriptions/{subscription}', [SubscriptionController::class, 'update'])->name('subscriptions.update');
+    Route::delete('/subscriptions/{subscription}', [SubscriptionController::class, 'destroy'])->name('subscriptions.destroy');
     /* 
 
     // Categorías
