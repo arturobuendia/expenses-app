@@ -35,7 +35,13 @@ class WhaasWebhookController extends Controller
             // 3. Armamos un mensaje de confirmación bonito
             $tipo = $parsedData['type'] === 'expense' ? 'Gasto' : 'Ingreso';
             $monto = number_format($record->amount, 2);
-            $respuesta = "✅ {$tipo} de $\n{$monto} registrado en la categoría correcta. ({$record->description})";
+            
+            if ($parsedData['type'] === 'loan') {
+                $respuesta = "✅ Anotado: Le prestaste $\n{$monto} a {$record->debtor_name}. ({$record->description})";
+            } else {
+                $tipo = $parsedData['type'] === 'expense' ? 'Gasto' : 'Ingreso';
+                $respuesta = "✅ {$tipo} de $\n{$monto} registrado. ({$record->description})";
+            }
 
             // 4. Te enviamos el WhatsApp de vuelta
             $whaas->sendMessage($fromNumber, $respuesta);

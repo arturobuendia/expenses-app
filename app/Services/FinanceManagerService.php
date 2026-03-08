@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Expense;
 use App\Models\Income;
+use App\Models\Loan;
 use Carbon\Carbon;
 
 class FinanceManagerService
@@ -11,6 +12,16 @@ class FinanceManagerService
     public function recordTransaction(array $data)
     {
         $data['date'] = Carbon::now()->toDateString();
+
+        if ($data['type'] === 'loan') {
+            return Loan::create([
+                'debtor_name' => $data['debtor_name'],
+                'amount' => $data['amount'],
+                'description' => $data['description'] ?? 'Préstamo',
+                'date' => $data['date'],
+                'is_paid' => false,
+            ]);
+        }
 
         if ($data['type'] === 'expense') {
             return Expense::create([
