@@ -6,7 +6,7 @@ import type { BreadcrumbItem } from '@/types';
 import type { Loan } from '@/types/finances';
 import { useFormatter } from '@/composables/useFormatter';
 
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,12 @@ const { formatCurrency, formatDate } = useFormatter();
 
 defineProps<{
     loans: Loan[];
+    totals: {
+        pending_amount: number;
+        pending_count: number;
+        recovered_amount: number;
+        recovered_count: number;
+    };
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -99,6 +105,48 @@ const deleteLoan = (id: number) => {
                     + Nuevo Préstamo
                 </Button>
             </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+                <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
+                    <CardHeader class="pb-2">
+                        <CardTitle class="text-sm font-medium text-zinc-400">Dinero por Cobrar</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="text-3xl font-bold text-amber-400">
+                            {{ formatCurrency(totals.pending_amount) }}
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
+                    <CardHeader class="pb-2">
+                        <CardTitle class="text-sm font-medium text-zinc-400">Préstamos Activos</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="text-3xl font-bold text-zinc-100">{{ totals.pending_count }}</p>
+                    </CardContent>
+                </Card>
+
+                <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
+                    <CardHeader class="pb-2">
+                        <CardTitle class="text-sm font-medium text-zinc-400">Dinero Recuperado</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="text-3xl font-bold text-emerald-400/80">
+                            {{ formatCurrency(totals.recovered_amount) }}
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
+                    <CardHeader class="pb-2">
+                        <CardTitle class="text-sm font-medium text-zinc-400">Deudas Saldadas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="text-3xl font-bold text-zinc-500">{{ totals.recovered_count }}</p>
+                    </CardContent>
+                </Card>
+            </div>
 
             <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
                 <CardContent class="p-0">
@@ -188,7 +236,7 @@ const deleteLoan = (id: number) => {
                                     class="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-zinc-500"
                                     placeholder="0.00" />
                                 <span v-if="form.errors.amount" class="text-red-500 text-xs">{{ form.errors.amount
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
 
@@ -198,7 +246,7 @@ const deleteLoan = (id: number) => {
                                 class="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-zinc-500"
                                 placeholder="Ej. Para completar la cuenta de la cena" />
                             <span v-if="form.errors.description" class="text-red-500 text-xs">{{ form.errors.description
-                                }}</span>
+                            }}</span>
                         </div>
 
                         <div class="space-y-2">

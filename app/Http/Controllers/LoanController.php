@@ -10,13 +10,25 @@ class LoanController extends Controller
 {
     public function index()
     {
-        // Ordenamos: primero los no pagados (is_paid = 0), luego por fecha más reciente
+        // Traemos todos los préstamos para calcular los totales
         $loans = Loan::orderBy('is_paid', 'asc')
             ->orderByDesc('date')
             ->get();
 
+        // Separamos en dos grupos para calcular las métricas fácilmente
+        $pendingLoans = $loans->where('is_paid', false);
+        $paidLoans = $loans->where('is_paid', true);
+
+        $totals = [
+            'pending_amount' => $pendingLoans->sum('amount'),
+            'pending_count' => $pendingLoans->count(),
+            'recovered_amount' => $paidLoans->sum('amount'),
+            'recovered_count' => $paidLoans->count(),
+        ];
+
         return Inertia::render('Loans/Index', [
-            'loans' => $loans,
+            'loans' => $loans->values(),
+            'totals' => $totals,
         ]);
     }
 
