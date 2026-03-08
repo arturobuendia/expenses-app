@@ -20,6 +20,7 @@ import { index as incomes } from '@/routes/incomes';
 import { index as vaults } from '@/routes/vaults';
 import { index as subscriptions } from '@/routes/subscriptions';
 import { index as loans } from '@/routes/loans';
+import { index as categories } from '@/routes/categories';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -52,6 +53,11 @@ const mainNavItems: NavItem[] = [
         title: 'Préstamos',
         href: loans(),
         icon: FileText,
+    },
+    {
+        title: 'Categorías',
+        href: categories(),
+        icon: FolderGit2,
     },
 ];
 
