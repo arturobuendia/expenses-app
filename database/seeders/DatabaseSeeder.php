@@ -10,6 +10,7 @@ use App\Models\Expense;
 use App\Models\Income;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Models\Loan;
 use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
@@ -153,6 +154,31 @@ class DatabaseSeeder extends Seeder
             'name' => 'Github Copilot',
             'amount' => 200.00,
             'next_billing_date' => $now->copy()->addDays(2),
+        ]);
+
+        // 6. Crear Préstamos de prueba
+        Loan::create([
+            'debtor_name' => 'Luis',
+            'amount' => 500.00,
+            'description' => 'Para la gasolina',
+            'date' => $now->copy()->subDays(2),
+            'is_paid' => false,
+        ]);
+
+        Loan::create([
+            'debtor_name' => 'Carlos',
+            'amount' => 1500.00,
+            'description' => 'Completar renta',
+            'date' => $now->copy()->subDays(15),
+            'is_paid' => true, // Este ya te lo pagaron
+        ]);
+
+        Loan::create([
+            'debtor_name' => 'Ximena',
+            'amount' => 800.00,
+            'description' => 'Flores proveedor',
+            'date' => $now->copy()->subDays(5),
+            'is_paid' => false,
         ]);
     }
 }
