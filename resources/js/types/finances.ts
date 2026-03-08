@@ -45,3 +45,12 @@ export interface Income {
     date: string;
     category: Category;
 }
+
+export interface Loan {
+    id: number;
+    debtor_name: string;
+    amount: number | string;
+    description: string | null;
+    date: string;
+    is_paid: boolean;
+}
