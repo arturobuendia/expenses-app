@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid, CreditCard } from 'lucide-vue-next';
+import { BookOpen, FolderGit2, LayoutGrid, CreditCard, DollarSign } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes'
 import { index as expenses } from '@/routes/expenses';
+import { index as incomes } from '@/routes/incomes';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -28,6 +29,11 @@ const mainNavItems: NavItem[] = [
         title: 'Gastos',
         href: expenses(),
         icon: CreditCard,
+    },
+    {
+        title: 'Ingresos',
+        href: incomes(),
+        icon: DollarSign,
     },
 ];
 

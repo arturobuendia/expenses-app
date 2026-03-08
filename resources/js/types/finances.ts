@@ -36,3 +36,12 @@ export interface Totals {
     expenses: number;
     capital: number;
 }
+
+export interface Income {
+    id: number;
+    category_id: number;
+    amount: number | string;
+    description: string;
+    date: string;
+    category: Category;
+}
