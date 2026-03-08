@@ -8,6 +8,7 @@ use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\VaultController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\LoanController;
+use App\Http\Controllers\CategoryController;
 
 Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -49,12 +50,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/loans/{loan}', [LoanController::class, 'update'])->name('loans.update');
     Route::delete('/loans/{loan}', [LoanController::class, 'destroy'])->name('loans.destroy');
     Route::patch('/loans/{loan}/pay', [LoanController::class, 'markAsPaid'])->name('loans.pay');
-    /* 
 
     // Categorías
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
-    Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update'); */
+    Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
 });
 
 require __DIR__ . '/settings.php';
