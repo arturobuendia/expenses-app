@@ -5,6 +5,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\IncomeController;
+use App\Http\Controllers\VaultController;
 
 Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -27,13 +28,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/incomes', [IncomeController::class, 'store'])->name('incomes.store');
     Route::put('/incomes/{income}', [IncomeController::class, 'update'])->name('incomes.update');
     Route::delete('/incomes/{income}', [IncomeController::class, 'destroy'])->name('incomes.destroy');
-    /* 
-
+    
     // Bóvedas (Capital)
     Route::get('/vaults', [VaultController::class, 'index'])->name('vaults.index');
     Route::post('/vaults', [VaultController::class, 'store'])->name('vaults.store');
     Route::put('/vaults/{vault}', [VaultController::class, 'update'])->name('vaults.update');
     Route::delete('/vaults/{vault}', [VaultController::class, 'destroy'])->name('vaults.destroy');
+    /* 
 
     // Categorías
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
