@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import type { Category, Income } from '@/types/finances';
 import { useFormatter } from '@/composables/useFormatter';
 
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -16,12 +16,23 @@ import { Button } from '@/components/ui/button';
 
 const { formatCurrency, formatDate } = useFormatter();
 
-defineProps<{
+const props = defineProps<{
     incomes: {
         data: Income[];
         links: any[];
     };
     categories: Category[];
+    totals: {
+        total_amount: number;
+        transaction_count: number;
+        average_income: number;
+        biggest_income: number;
+    };
+    filters: {
+        search?: string;
+        category_id?: string;
+        date_filter?: string;
+    };
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -29,12 +40,36 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Ingresos', href: '/incomes' },
 ];
 
-// Estado del Modal (Dialog)
+// --- Lógica de Filtros ---
+const activeFilters = ref({
+    search: props.filters?.search || '',
+    category_id: props.filters?.category_id || 'all',
+    date_filter: props.filters?.date_filter || 'this_month',
+});
+
+let timeoutId: ReturnType<typeof setTimeout>;
+
+watch(activeFilters, (newValues) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+        router.get('/incomes', newValues, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    }, 300);
+}, { deep: true });
+
+const refreshData = () => {
+    router.reload({ only: ['incomes', 'totals'] });
+};
+// ---------------------------------
+
+// Lógica del Modal
 const isModalOpen = ref(false);
 const isEditing = ref(false);
 const editingId = ref<number | null>(null);
 
-// Formulario de Inertia
 const form = useForm({
     category_id: '',
     amount: '',
@@ -92,15 +127,106 @@ const deleteIncome = (id: number) => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="min-h-screen bg-zinc-950 text-zinc-100 p-8 font-sans">
             
-            <header class="mb-8 flex justify-between items-end">
+            <header class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <h1 class="text-3xl font-bold tracking-tight text-white">Historial de Ingresos</h1>
                     <p class="text-zinc-400 mt-1">Registro de entradas de dinero, sueldos y rendimientos.</p>
                 </div>
-                <Button @click="openModal()" class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200">
-                    + Nuevo Ingreso
-                </Button>
+                <div class="flex items-center gap-3">
+                    <Button variant="outline" @click="refreshData" class="border-zinc-800 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                        <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
+                        Actualizar
+                    </Button>
+                    <Button @click="openModal()" class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200">
+                        + Nuevo Ingreso
+                    </Button>
+                </div>
             </header>
+
+            <div class="flex flex-col md:flex-row gap-4 mb-8 p-4 border border-zinc-800 rounded-xl bg-zinc-900/50 items-center">
+                <div class="relative w-full md:w-64">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="w-4 h-4 text-zinc-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                        </svg>
+                    </div>
+                    <Input v-model="activeFilters.search" placeholder="Buscar ingresos..." class="pl-10 bg-zinc-950 border-zinc-800 focus-visible:ring-zinc-500 text-zinc-200" />
+                </div>
+
+                <Select v-model="activeFilters.category_id">
+                    <SelectTrigger class="w-full md:w-50 bg-zinc-950 border-zinc-800 focus:ring-zinc-500 text-zinc-200">
+                        <SelectValue placeholder="Todas las Categorías" />
+                    </SelectTrigger>
+                    <SelectContent class="bg-zinc-950 border-zinc-800 text-zinc-100">
+                        <SelectGroup>
+                            <SelectItem value="all" class="focus:bg-zinc-800 focus:text-zinc-100">Todas las Categorías</SelectItem>
+                            <SelectItem v-for="cat in categories" :key="cat.id" :value="cat.id.toString()" class="focus:bg-zinc-800 focus:text-zinc-100">
+                                {{ cat.name }}
+                            </SelectItem>
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+
+                <Select v-model="activeFilters.date_filter">
+                    <SelectTrigger class="w-full md:w-50 bg-zinc-950 border-zinc-800 focus:ring-zinc-500 text-zinc-200">
+                        <SelectValue placeholder="Periodo" />
+                    </SelectTrigger>
+                    <SelectContent class="bg-zinc-950 border-zinc-800 text-zinc-100">
+                        <SelectGroup>
+                            <SelectItem value="this_month" class="focus:bg-zinc-800 focus:text-zinc-100">Este mes</SelectItem>
+                            <SelectItem value="last_month" class="focus:bg-zinc-800 focus:text-zinc-100">Mes pasado</SelectItem>
+                            <SelectItem value="this_year" class="focus:bg-zinc-800 focus:text-zinc-100">Este año</SelectItem>
+                            <SelectItem value="all_time" class="focus:bg-zinc-800 focus:text-zinc-100">Todo el tiempo</SelectItem>
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+                <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
+                    <CardHeader class="pb-2">
+                        <CardTitle class="text-sm font-medium text-zinc-400">Total Filtrado</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="text-3xl font-bold text-emerald-500">
+                            +{{ formatCurrency(totals.total_amount) }}
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
+                    <CardHeader class="pb-2">
+                        <CardTitle class="text-sm font-medium text-zinc-400">Operaciones</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="text-3xl font-bold text-zinc-100">{{ totals.transaction_count }}</p>
+                    </CardContent>
+                </Card>
+
+                <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
+                    <CardHeader class="pb-2">
+                        <CardTitle class="text-sm font-medium text-zinc-400">Promedio por Ingreso</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="text-3xl font-bold text-emerald-400/80">
+                            +{{ formatCurrency(totals.average_income) }}
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
+                    <CardHeader class="pb-2">
+                        <CardTitle class="text-sm font-medium text-zinc-400">Ingreso Mayor</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p class="text-3xl font-bold text-emerald-600">
+                            +{{ formatCurrency(totals.biggest_income) }}
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
 
             <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
                 <CardContent class="p-0">
@@ -138,7 +264,7 @@ const deleteIncome = (id: number) => {
                                 </TableRow>
                                 <TableRow v-if="incomes.data.length === 0" class="border-zinc-800 hover:bg-transparent">
                                     <TableCell colspan="5" class="py-8 text-center text-zinc-500">
-                                        No hay ingresos registrados.
+                                        No se encontraron ingresos con estos filtros.
                                     </TableCell>
                                 </TableRow>
                             </TableBody>
