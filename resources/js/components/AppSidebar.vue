@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid, CreditCard, DollarSign, Lock, Repeat } from 'lucide-vue-next';
+import { BookOpen, FolderGit2, LayoutGrid, CreditCard, DollarSign, Lock, Repeat, FileText } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -19,6 +19,7 @@ import { index as expenses } from '@/routes/expenses';
 import { index as incomes } from '@/routes/incomes';
 import { index as vaults } from '@/routes/vaults';
 import { index as subscriptions } from '@/routes/subscriptions';
+import { index as loans } from '@/routes/loans';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -47,6 +48,11 @@ const mainNavItems: NavItem[] = [
         href: subscriptions(),
         icon: Repeat,
     }, 
+    {
+        title: 'Préstamos',
+        href: loans(),
+        icon: FileText,
+    },
 ];
 
 const footerNavItems: NavItem[] = [
