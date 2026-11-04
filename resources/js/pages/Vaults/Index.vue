@@ -36,7 +36,7 @@ const editingId = ref<number | null>(null);
 
 const form = useForm({
     name: '',
-    balance: '',
+    initial_balance: '',
     annual_yield_rate: '',
     yield_cap: '',
 });
@@ -46,7 +46,7 @@ const openModal = (vault?: Vault) => {
         isEditing.value = true;
         editingId.value = vault.id;
         form.name = vault.name;
-        form.balance = vault.balance.toString();
+        form.initial_balance = vault.initial_balance.toString();
         form.annual_yield_rate = vault.annual_yield_rate ? vault.annual_yield_rate.toString() : '';
         form.yield_cap = vault.yield_cap ? vault.yield_cap.toString() : '';
     } else {
@@ -153,7 +153,8 @@ const deleteVault = (id: number) => {
                                     <TableHead class="text-zinc-400 font-medium text-right">Tasa / Tope</TableHead>
                                     <TableHead class="text-zinc-400 font-medium text-right">Rend. Diario</TableHead>
                                     <TableHead class="text-zinc-400 font-medium text-right">Rend. Mensual</TableHead>
-                                    <TableHead class="text-zinc-400 font-medium text-right">Balance Actual</TableHead>
+                                    <TableHead class="text-zinc-400 font-medium text-right">Saldo Inicial</TableHead>
+                                    <TableHead class="text-zinc-400 font-medium text-right">Saldo Actual</TableHead>
                                     <TableHead class="text-zinc-400 font-medium text-right">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -173,6 +174,9 @@ const deleteVault = (id: number) => {
                                     <TableCell class="text-right text-emerald-400 font-medium">
                                         {{ vault.monthly_yield > 0 ? `+${formatCurrency(vault.monthly_yield)}` : '-' }}
                                     </TableCell>
+                                    <TableCell class="text-right text-zinc-500 font-medium">
+                                        {{ formatCurrency(vault.initial_balance) }}
+                                    </TableCell>
                                     <TableCell class="text-right font-bold text-zinc-100">
                                         {{ formatCurrency(vault.balance) }}
                                     </TableCell>
@@ -188,7 +192,7 @@ const deleteVault = (id: number) => {
                                     </TableCell>
                                 </TableRow>
                                 <TableRow v-if="vaults.length === 0" class="border-zinc-800 hover:bg-transparent">
-                                    <TableCell colspan="6" class="py-8 text-center text-zinc-500">
+                                    <TableCell colspan="7" class="py-8 text-center text-zinc-500">
                                         No tienes bóvedas registradas.
                                     </TableCell>
                                 </TableRow>
@@ -217,12 +221,16 @@ const deleteVault = (id: number) => {
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="balance" class="text-zinc-400">Balance Actual</Label>
-                            <Input id="balance" v-model="form.balance" type="number" step="0.01" min="0" required
+                            <Label for="initial_balance" class="text-zinc-400">Saldo Inicial</Label>
+                            <Input id="initial_balance" v-model="form.initial_balance" type="number" step="0.01" min="0" required
                                 class="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-zinc-500 font-medium"
                                 placeholder="0.00" />
-                            <span v-if="form.errors.balance" class="text-red-500 text-xs">{{ form.errors.balance
-                                }}</span>
+                            <p class="text-xs text-zinc-500">
+                                Punto de partida. El saldo actual se calcula sumando ingresos y restando los gastos
+                                marcados para esta bóveda.
+                            </p>
+                            <span v-if="form.errors.initial_balance" class="text-red-500 text-xs">{{
+                                form.errors.initial_balance }}</span>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4 pt-2 border-t border-zinc-800 mt-4">

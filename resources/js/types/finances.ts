@@ -1,4 +1,3 @@
-
 export interface Category {
     id: number;
     name: string;
@@ -6,21 +5,26 @@ export interface Category {
     is_active: boolean;
 }
 
-export interface Expense {
-    id: number;
-    category_id: number;
-    amount: number | string;
-    description: string;
-    date: string;
-    category: Category;
-}
-
 export interface Vault {
     id: number;
     name: string;
+    initial_balance: number | string;
+    /** Saldo calculado por el backend: initial_balance + ingresos - gastos. */
     balance: number | string;
     annual_yield_rate?: number | string | null;
     yield_cap?: number | string | null;
+}
+
+export interface Expense {
+    id: number;
+    category_id: number;
+    vault_id: number | null;
+    amount: number | string;
+    description: string;
+    date: string;
+    is_transfer: boolean;
+    category: Category;
+    vault?: Vault | null;
 }
 
 export interface Subscription {
@@ -40,10 +44,12 @@ export interface Totals {
 export interface Income {
     id: number;
     category_id: number;
+    vault_id: number | null;
     amount: number | string;
     description: string;
     date: string;
     category: Category;
+    vault?: Vault | null;
 }
 
 export interface Loan {

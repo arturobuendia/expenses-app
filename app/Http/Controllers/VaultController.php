@@ -10,31 +10,20 @@ class VaultController extends Controller
 {
     public function index()
     {
-        // Traemos las bóvedas y calculamos sus rendimientos al vuelo
-        $vaults = Vault::orderByDesc('balance')->get()->map(function ($vault) {
-            $dailyYield = 0;
-            $monthlyYield = 0;
+        // El saldo es calculado (initial_balance + ingresos - gastos), así que
+        // precargamos los movimientos y ordenamos en memoria.
+        $vaults = Vault::withMovements()
+            ->get()
+            ->map(fn (Vault $vault) => $vault->withComputedBalance())
+            ->sortByDesc('balance')
+            ->values()
+            ->map(function (Vault $vault) {
+                $vault->daily_yield = $vault->dailyYield();
+                $vault->monthly_yield = $vault->monthlyYield();
 
-            if ($vault->annual_yield_rate > 0) {
-                // Si hay tope y el saldo lo supera, calculamos solo sobre el tope
-                $effectiveBalance = ($vault->yield_cap && $vault->balance > $vault->yield_cap)
-                    ? $vault->yield_cap
-                    : $vault->balance;
+                return $vault;
+            });
 
-                // Cálculo de rendimientos
-                $annualYield = $effectiveBalance * ($vault->annual_yield_rate / 100);
-                $dailyYield = $annualYield / 365; // Estándar de 365 días
-                $monthlyYield = $annualYield / 12;
-            }
-
-            // Mutamos el objeto para agregarle estas propiedades virtuales
-            $vault->daily_yield = $dailyYield;
-            $vault->monthly_yield = $monthlyYield;
-
-            return $vault;
-        });
-
-        // Calculamos los totales generales para las tarjetas
         $totals = [
             'accounts' => $vaults->count(),
             'capital' => $vaults->sum('balance'),
@@ -52,7 +41,7 @@ class VaultController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'balance' => 'required|numeric|min:0',
+            'initial_balance' => 'required|numeric|min:0',
             'annual_yield_rate' => 'nullable|numeric|min:0|max:100',
             'yield_cap' => 'nullable|numeric|min:0',
         ]);
@@ -66,7 +55,7 @@ class VaultController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'balance' => 'required|numeric|min:0',
+            'initial_balance' => 'required|numeric|min:0',
             'annual_yield_rate' => 'nullable|numeric|min:0|max:100',
             'yield_cap' => 'nullable|numeric|min:0',
         ]);

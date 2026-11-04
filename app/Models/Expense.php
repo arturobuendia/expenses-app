@@ -9,9 +9,11 @@ class Expense extends Model
 {
     protected $fillable = [
         'category_id',
+        'vault_id',
         'amount',
         'description',
         'date',
+        'is_transfer',
     ];
 
     protected function casts(): array
@@ -19,11 +21,17 @@ class Expense extends Model
         return [
             'amount' => 'decimal:2',
             'date' => 'date',
+            'is_transfer' => 'boolean',
         ];
     }
 
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function vault(): BelongsTo
+    {
+        return $this->belongsTo(Vault::class);
     }
 }
