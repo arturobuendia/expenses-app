@@ -22,6 +22,7 @@ const props = defineProps<{
         links: any[];
     };
     categories: Category[];
+    vaults: { id: number; name: string }[];
     totals: {
         total_amount: number;
         transaction_count: number;
@@ -72,6 +73,7 @@ const editingId = ref<number | null>(null);
 
 const form = useForm({
     category_id: '',
+    vault_id: '',
     amount: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
@@ -82,6 +84,7 @@ const openModal = (income?: Income) => {
         isEditing.value = true;
         editingId.value = income.id;
         form.category_id = income.category_id.toString(); 
+        form.vault_id = income.vault_id ? income.vault_id.toString() : '';
         form.amount = income.amount.toString();
         form.description = income.description;
         form.date = income.date;
@@ -237,6 +240,7 @@ const deleteIncome = (id: number) => {
                                     <TableHead class="text-zinc-400 font-medium">Fecha</TableHead>
                                     <TableHead class="text-zinc-400 font-medium">Descripción</TableHead>
                                     <TableHead class="text-zinc-400 font-medium">Categoría</TableHead>
+                                    <TableHead class="text-zinc-400 font-medium">Bóveda</TableHead>
                                     <TableHead class="text-zinc-400 font-medium text-right">Monto</TableHead>
                                     <TableHead class="text-zinc-400 font-medium text-right">Acciones</TableHead>
                                 </TableRow>
@@ -249,6 +253,12 @@ const deleteIncome = (id: number) => {
                                         <span class="inline-flex items-center rounded-md bg-zinc-800 px-2 py-1 text-xs font-medium text-zinc-300 ring-1 ring-inset ring-zinc-700">
                                             {{ income.category.name }}
                                         </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span v-if="income.vault" class="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
+                                            {{ income.vault.name }}
+                                        </span>
+                                        <span v-else class="text-xs text-zinc-600">Sin bóveda</span>
                                     </TableCell>
                                     <TableCell class="text-right text-emerald-400 font-medium">
                                         +{{ formatCurrency(income.amount) }}
@@ -263,7 +273,7 @@ const deleteIncome = (id: number) => {
                                     </TableCell>
                                 </TableRow>
                                 <TableRow v-if="incomes.data.length === 0" class="border-zinc-800 hover:bg-transparent">
-                                    <TableCell colspan="5" class="py-8 text-center text-zinc-500">
+                                    <TableCell colspan="6" class="py-8 text-center text-zinc-500">
                                         No se encontraron ingresos con estos filtros.
                                     </TableCell>
                                 </TableRow>
@@ -322,6 +332,26 @@ const deleteIncome = (id: number) => {
                                 </SelectContent>
                             </Select>
                             <span v-if="form.errors.category_id" class="text-red-500 text-xs">{{ form.errors.category_id }}</span>
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label class="text-zinc-400">Bóveda destino</Label>
+                            <Select v-model="form.vault_id" required>
+                                <SelectTrigger class="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-zinc-500">
+                                    <SelectValue placeholder="Selecciona una bóveda" />
+                                </SelectTrigger>
+                                <SelectContent class="bg-zinc-950 border-zinc-800 text-zinc-100">
+                                    <SelectGroup>
+                                        <SelectItem v-for="vault in vaults" :key="vault.id" :value="vault.id.toString()" class="focus:bg-zinc-800 focus:text-zinc-100">
+                                            {{ vault.name }}
+                                        </SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            <p v-if="vaults.length === 0" class="text-xs text-amber-400">
+                                No tienes bóvedas. Crea una en "Bóvedas" antes de registrar ingresos.
+                            </p>
+                            <span v-if="form.errors.vault_id" class="text-red-500 text-xs">{{ form.errors.vault_id }}</span>
                         </div>
 
                         <DialogFooter class="pt-4 mt-2 border-t border-zinc-800">

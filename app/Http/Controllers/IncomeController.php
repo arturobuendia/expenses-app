@@ -2,21 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Income;
 use App\Models\Category;
+use App\Models\Income;
+use App\Models\Vault;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Carbon\Carbon;
 
 class IncomeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Income::with('category');
+        $query = Income::with(['category', 'vault']);
 
         // 1. Filtro de Búsqueda (Descripción)
         if ($request->filled('search')) {
-            $query->where('description', 'like', '%' . $request->search . '%');
+            $query->where('description', 'like', '%'.$request->search.'%');
         }
 
         // 2. Filtro por Categoría
@@ -55,10 +56,12 @@ class IncomeController extends Controller
             ->withQueryString();
 
         $categories = Category::active()->ofType('income')->get(['id', 'name']);
+        $vaults = Vault::orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Incomes/Index', [
             'incomes' => $incomes,
             'categories' => $categories,
+            'vaults' => $vaults,
             'totals' => $totals,
             'filters' => $request->only(['search', 'category_id', 'date_filter']),
         ]);
@@ -68,6 +71,7 @@ class IncomeController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
+            'vault_id' => 'required|exists:vaults,id',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string|max:255',
             'date' => 'required|date',
@@ -82,6 +86,7 @@ class IncomeController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
+            'vault_id' => 'required|exists:vaults,id',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string|max:255',
             'date' => 'required|date',
