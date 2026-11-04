@@ -2,20 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Card;
+use App\Models\Category;
 use App\Models\Subscription;
+use App\Services\SubscriptionBiller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class SubscriptionController extends Controller
 {
-    public function index()
+    public function index(SubscriptionBiller $biller)
     {
-        // Traemos todas las suscripciones
-        $subscriptions = Subscription::orderBy('next_billing_date', 'asc')->get();
+        // Materializa los cobros vencidos antes de listar.
+        $biller->run();
+
+        $subscriptions = Subscription::with(['card', 'category'])
+            ->orderBy('next_billing_date', 'asc')
+            ->get();
 
         // Calculamos las métricas separando las activas de las pausadas
         $activeSubs = $subscriptions->where('is_active', true);
-        $monthlyCost = $activeSubs->sum('amount');
+        $monthlyCost = $activeSubs->sum(fn (Subscription $subscription) => $subscription->monthlyAmount());
 
         $totals = [
             'active_count' => $activeSubs->count(),
@@ -26,34 +33,22 @@ class SubscriptionController extends Controller
 
         return Inertia::render('Subscriptions/Index', [
             'subscriptions' => $subscriptions->values(), // values() reindexa el array para Vue
+            'categories' => Category::active()->ofType('expense')->get(['id', 'name']),
+            'cards' => Card::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'totals' => $totals,
         ]);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0.01',
-            'next_billing_date' => 'required|date',
-            'is_active' => 'boolean',
-        ]);
-
-        Subscription::create($validated);
+        Subscription::create($this->validatedData($request));
 
         return redirect()->back()->with('success', 'Suscripción agregada correctamente.');
     }
 
     public function update(Request $request, Subscription $subscription)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0.01',
-            'next_billing_date' => 'required|date',
-            'is_active' => 'boolean',
-        ]);
-
-        $subscription->update($validated);
+        $subscription->update($this->validatedData($request));
 
         return redirect()->back()->with('success', 'Suscripción actualizada.');
     }
@@ -63,5 +58,22 @@ class SubscriptionController extends Controller
         $subscription->delete();
 
         return redirect()->back()->with('success', 'Suscripción eliminada.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validatedData(Request $request): array
+    {
+        return $request->validate([
+            'name' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:0.01',
+            // Sin categoría el gasto generado no podría existir.
+            'category_id' => 'required|exists:categories,id',
+            'card_id' => 'nullable|exists:cards,id',
+            'next_billing_date' => 'required|date',
+            'frequency' => 'required|in:monthly,annual',
+            'is_active' => 'boolean',
+        ]);
     }
 }

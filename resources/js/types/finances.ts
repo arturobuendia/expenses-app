@@ -67,8 +67,13 @@ export interface Subscription {
     id: number;
     name: string;
     amount: number | string;
+    category_id: number | null;
+    card_id: number | null;
     next_billing_date: string;
+    frequency: 'monthly' | 'annual';
     is_active: boolean;
+    category?: Category | null;
+    card?: Card | null;
 }
 
 export interface Totals {

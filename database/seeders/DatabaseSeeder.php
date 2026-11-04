@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Card;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Income;
@@ -72,6 +73,14 @@ class DatabaseSeeder extends Seeder
             'initial_balance' => 9500.00,
             'annual_yield_rate' => 13.00,
             'yield_cap' => 10000.00,
+        ]);
+
+        // 2.1 Tarjeta de crédito con su ciclo de facturación
+        $cardBbva = Card::create([
+            'name' => 'BBVA Azul',
+            'credit_limit' => 40000.00,
+            'cut_off_day' => 10,
+            'payment_day' => 25,
         ]);
 
         // 3. Registrar Ingresos del mes (cada uno entra a una bóveda)
@@ -148,6 +157,7 @@ class DatabaseSeeder extends Seeder
         Expense::create([
             'category_id' => $catPagoTarjeta,
             'vault_id' => $vaultPrincipal->id,
+            'card_id' => $cardBbva->id,
             'amount' => 3500.00,
             'description' => 'Pago tarjeta de crédito BBVA',
             'date' => $now->copy()->subDays(1),
@@ -158,19 +168,28 @@ class DatabaseSeeder extends Seeder
         Subscription::create([
             'name' => 'Spotify Premium',
             'amount' => 129.00,
+            'category_id' => $catEntretenimiento,
+            'card_id' => $cardBbva->id,
             'next_billing_date' => $now->copy()->addDays(5),
+            'frequency' => 'monthly',
         ]);
 
         Subscription::create([
             'name' => 'Hetzner Cloud',
             'amount' => 380.00,
+            'category_id' => $catServidores,
+            'card_id' => $cardBbva->id,
             'next_billing_date' => $now->copy()->addDays(12),
+            'frequency' => 'monthly',
         ]);
 
         Subscription::create([
             'name' => 'Github Copilot',
-            'amount' => 200.00,
+            'amount' => 2400.00,
+            'category_id' => $catServidores,
+            'card_id' => $cardBbva->id,
             'next_billing_date' => $now->copy()->addDays(2),
+            'frequency' => 'annual',
         ]);
 
         // 6. Crear Préstamos de prueba

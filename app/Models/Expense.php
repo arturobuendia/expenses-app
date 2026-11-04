@@ -12,6 +12,7 @@ class Expense extends Model
         'vault_id',
         'card_id',
         'card_statement_id',
+        'subscription_id',
         'amount',
         'description',
         'date',
@@ -45,5 +46,10 @@ class Expense extends Model
     public function statement(): BelongsTo
     {
         return $this->belongsTo(CardStatement::class, 'card_statement_id');
+    }
+
+    public function subscription(): BelongsTo
+    {
+        return $this->belongsTo(Subscription::class);
     }
 }
