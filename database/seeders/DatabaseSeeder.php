@@ -2,16 +2,16 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use App\Models\Category;
-use App\Models\Vault;
 use App\Models\Expense;
 use App\Models\Income;
+use App\Models\Loan;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Models\Loan;
+use App\Models\Vault;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Servidores y Homelab', 'type' => 'expense'],
             ['name' => 'Entretenimiento', 'type' => 'expense'],
             ['name' => 'Educación', 'type' => 'expense'],
+            ['name' => 'Pago de Tarjeta', 'type' => 'expense'],
             ['name' => 'Proyectos SaaS', 'type' => 'income'],
             ['name' => 'Negocios Locales', 'type' => 'income'],
             ['name' => 'Rendimientos', 'type' => 'income'],
@@ -47,34 +48,36 @@ class DatabaseSeeder extends Seeder
         $catServidores = Category::where('name', 'Servidores y Homelab')->first()->id;
         $catEntretenimiento = Category::where('name', 'Entretenimiento')->first()->id;
         $catEducacion = Category::where('name', 'Educación')->first()->id;
+        $catPagoTarjeta = Category::where('name', 'Pago de Tarjeta')->first()->id;
 
         $catSaas = Category::where('name', 'Proyectos SaaS')->first()->id;
         $catNegocios = Category::where('name', 'Negocios Locales')->first()->id;
         $catRendimientos = Category::where('name', 'Rendimientos')->first()->id;
 
         // 2. Crear las Bóvedas de Capital e Inversión
-        Vault::create([
+        $vaultPrincipal = Vault::create([
             'name' => 'Cuenta Principal',
-            'balance' => 45000.00,
+            'initial_balance' => 45000.00,
         ]);
 
         Vault::create([
             'name' => 'Revolut Inversión',
-            'balance' => 25000.00,
+            'initial_balance' => 25000.00,
             'annual_yield_rate' => 15.00,
             'yield_cap' => 25000.00,
         ]);
 
-        Vault::create([
+        $vaultDidi = Vault::create([
             'name' => 'Didi Rendimientos',
-            'balance' => 9500.00,
+            'initial_balance' => 9500.00,
             'annual_yield_rate' => 13.00,
             'yield_cap' => 10000.00,
         ]);
 
-        // 3. Registrar Ingresos del mes
+        // 3. Registrar Ingresos del mes (cada uno entra a una bóveda)
         Income::create([
             'category_id' => $catSaas,
+            'vault_id' => $vaultPrincipal->id,
             'amount' => 12500.00,
             'description' => 'Mensualidades MenuPro',
             'date' => $now->copy()->subDays(5),
@@ -82,6 +85,7 @@ class DatabaseSeeder extends Seeder
 
         Income::create([
             'category_id' => $catSaas,
+            'vault_id' => $vaultPrincipal->id,
             'amount' => 8000.00,
             'description' => 'Anticipo desarrollo Nexus Ops',
             'date' => $now->copy()->subDays(10),
@@ -89,6 +93,7 @@ class DatabaseSeeder extends Seeder
 
         Income::create([
             'category_id' => $catNegocios,
+            'vault_id' => $vaultPrincipal->id,
             'amount' => 6400.00,
             'description' => 'Ingresos semana Car Spa',
             'date' => $now->copy()->subDays(2),
@@ -96,6 +101,7 @@ class DatabaseSeeder extends Seeder
 
         Income::create([
             'category_id' => $catRendimientos,
+            'vault_id' => $vaultDidi->id,
             'amount' => 312.50,
             'description' => 'Rendimientos Revolut',
             'date' => $now->copy()->startOfMonth(),
@@ -135,6 +141,17 @@ class DatabaseSeeder extends Seeder
             'amount' => 850.00,
             'description' => 'Cena de fin de semana',
             'date' => $now->copy()->subDays(4),
+        ]);
+
+        // Pago de la tarjeta de crédito: sale de la bóveda pero no es un gasto
+        // nuevo (las compras ya se registraron arriba), es una transferencia.
+        Expense::create([
+            'category_id' => $catPagoTarjeta,
+            'vault_id' => $vaultPrincipal->id,
+            'amount' => 3500.00,
+            'description' => 'Pago tarjeta de crédito BBVA',
+            'date' => $now->copy()->subDays(1),
+            'is_transfer' => true,
         ]);
 
         // 5. Crear Suscripciones Fijas
