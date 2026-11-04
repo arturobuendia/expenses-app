@@ -24,6 +24,7 @@ const props = defineProps<{
     };
     categories: Category[];
     vaults: { id: number; name: string }[];
+    cards: { id: number; name: string }[];
     totals: {
         total_amount: number;
         transaction_count: number;
@@ -79,6 +80,7 @@ const editingId = ref<number | null>(null);
 const form = useForm({
     category_id: '',
     vault_id: 'none',
+    card_id: 'none',
     amount: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
@@ -91,6 +93,7 @@ const openModal = (expense?: Expense) => {
         editingId.value = expense.id;
         form.category_id = expense.category_id.toString();
         form.vault_id = expense.vault_id ? expense.vault_id.toString() : 'none';
+        form.card_id = expense.card_id ? expense.card_id.toString() : 'none';
         form.amount = expense.amount.toString();
         form.description = expense.description;
         form.date = expense.date;
@@ -100,6 +103,7 @@ const openModal = (expense?: Expense) => {
         editingId.value = null;
         form.reset();
         form.vault_id = 'none';
+        form.card_id = 'none';
         form.is_transfer = false;
         form.date = new Date().toISOString().split('T')[0];
     }
@@ -115,9 +119,13 @@ const closeModal = () => {
 };
 
 const submitForm = () => {
+    const usesCard = form.card_id !== 'none';
+
     form.transform((data) => ({
         ...data,
-        vault_id: data.vault_id === 'none' ? null : data.vault_id,
+        card_id: data.card_id === 'none' ? null : data.card_id,
+        // Un cargo o sale de la bóveda o se debe en la tarjeta, nunca ambos.
+        vault_id: data.vault_id === 'none' || (usesCard && !data.is_transfer) ? null : data.vault_id,
         // Una transferencia sin bóveda no tendría de dónde restar.
         is_transfer: data.vault_id !== 'none' && data.is_transfer,
     }));
@@ -276,7 +284,7 @@ const deleteExpense = (id: number) => {
                                     <TableHead class="text-zinc-400 font-medium">Fecha</TableHead>
                                     <TableHead class="text-zinc-400 font-medium">Descripción</TableHead>
                                     <TableHead class="text-zinc-400 font-medium">Categoría</TableHead>
-                                    <TableHead class="text-zinc-400 font-medium">Bóveda</TableHead>
+                                    <TableHead class="text-zinc-400 font-medium">Origen</TableHead>
                                     <TableHead class="text-zinc-400 font-medium text-right">Monto</TableHead>
                                     <TableHead class="text-zinc-400 font-medium text-right">Acciones</TableHead>
                                 </TableRow>
@@ -294,7 +302,10 @@ const deleteExpense = (id: number) => {
                                         </span>
                                     </TableCell>
                                     <TableCell>
-                                        <span v-if="expense.vault" class="inline-flex items-center rounded-md bg-zinc-800 px-2 py-1 text-xs font-medium text-zinc-300 ring-1 ring-inset ring-zinc-700">
+                                        <span v-if="expense.card" class="inline-flex items-center rounded-md bg-violet-500/10 px-2 py-1 text-xs font-medium text-violet-300 ring-1 ring-inset ring-violet-500/20">
+                                            {{ expense.card.name }}
+                                        </span>
+                                        <span v-else-if="expense.vault" class="inline-flex items-center rounded-md bg-zinc-800 px-2 py-1 text-xs font-medium text-zinc-300 ring-1 ring-inset ring-zinc-700">
                                             {{ expense.vault.name }}
                                         </span>
                                         <span v-else class="text-xs text-zinc-600">-</span>
@@ -403,6 +414,30 @@ const deleteExpense = (id: number) => {
                             </Select>
                             <span v-if="form.errors.vault_id" class="text-red-500 text-xs">{{ form.errors.vault_id
                                 }}</span>
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label class="text-zinc-400">Tarjeta de crédito <span class="text-xs text-zinc-600">(Opcional)</span></Label>
+                            <Select v-model="form.card_id">
+                                <SelectTrigger class="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-zinc-500">
+                                    <SelectValue placeholder="No se debe en tarjeta" />
+                                </SelectTrigger>
+                                <SelectContent class="bg-zinc-950 border-zinc-800 text-zinc-100">
+                                    <SelectGroup>
+                                        <SelectItem value="none" class="focus:bg-zinc-800 focus:text-zinc-100">
+                                            No se debe en tarjeta
+                                        </SelectItem>
+                                        <SelectItem v-for="card in cards" :key="card.id" :value="card.id.toString()"
+                                            class="focus:bg-zinc-800 focus:text-zinc-100">
+                                            {{ card.name }}
+                                        </SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            <p v-if="form.card_id !== 'none' && !form.is_transfer" class="text-xs text-violet-300/80">
+                                Este cargo cae en el corte de la tarjeta y no sale de ninguna bóveda.
+                            </p>
+                            <span v-if="form.errors.card_id" class="text-red-500 text-xs">{{ form.errors.card_id }}</span>
                         </div>
 
                         <div v-if="form.vault_id !== 'none'" class="flex items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">

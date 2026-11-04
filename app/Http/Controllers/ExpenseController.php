@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Card;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Vault;
@@ -14,7 +15,7 @@ class ExpenseController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Expense::with(['category', 'vault']);
+        $query = Expense::with(['category', 'vault', 'card']);
 
         // 1. Filtro de Búsqueda (Descripción)
         if ($request->filled('search')) {
@@ -66,11 +67,13 @@ class ExpenseController extends Controller
 
         $categories = Category::active()->ofType('expense')->get(['id', 'name']);
         $vaults = Vault::orderBy('name')->get(['id', 'name']);
+        $cards = Card::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Expenses/Index', [
             'expenses' => $expenses,
             'categories' => $categories,
             'vaults' => $vaults,
+            'cards' => $cards,
             'totals' => $totals,
             'filters' => $request->only(['search', 'category_id', 'date_filter']), // Regresamos el estado
         ]);
@@ -105,6 +108,7 @@ class ExpenseController extends Controller
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
             'vault_id' => 'nullable|exists:vaults,id',
+            'card_id' => 'nullable|exists:cards,id',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string|max:255',
             'date' => 'required|date',
@@ -117,6 +121,23 @@ class ExpenseController extends Controller
             throw ValidationException::withMessages([
                 'vault_id' => 'Una transferencia necesita una bóveda de origen.',
             ]);
+        }
+
+        // Un cargo o sale de una bóveda (efectivo/débito) o se debe en la
+        // tarjeta. Las dos cosas a la vez descuadrarían ambos saldos.
+        if (! empty($validated['card_id']) && ! empty($validated['vault_id']) && ! $validated['is_transfer']) {
+            throw ValidationException::withMessages([
+                'card_id' => 'Un cargo no puede salir de una bóveda y de una tarjeta a la vez.',
+            ]);
+        }
+
+        // El cargo se asigna al corte que le corresponde. Los pagos no
+        // pertenecen a un estado de cuenta: lo liquidan.
+        if (! empty($validated['card_id']) && ! $validated['is_transfer']) {
+            $card = Card::findOrFail($validated['card_id']);
+            $validated['card_statement_id'] = $card->statementFor($validated['date'])->id;
+        } else {
+            $validated['card_statement_id'] = null;
         }
 
         return $validated;

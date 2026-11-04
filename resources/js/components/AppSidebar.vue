@@ -8,6 +8,7 @@ import {
     Lock,
     Repeat,
     FileText,
+    Wallet,
 } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -25,6 +26,7 @@ import { dashboard } from '@/routes';
 import { index as expenses } from '@/routes/expenses';
 import { index as incomes } from '@/routes/incomes';
 import { index as vaults } from '@/routes/vaults';
+import { index as cards } from '@/routes/cards';
 import { index as subscriptions } from '@/routes/subscriptions';
 import { index as loans } from '@/routes/loans';
 import { index as categories } from '@/routes/categories';
@@ -50,6 +52,11 @@ const mainNavItems: NavItem[] = [
         title: 'Bóvedas',
         href: vaults(),
         icon: Lock,
+    },
+    {
+        title: 'Tarjetas',
+        href: cards(),
+        icon: Wallet,
     },
     {
         title: 'Suscripciones',

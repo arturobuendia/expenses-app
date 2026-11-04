@@ -1,21 +1,22 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
+use App\Http\Controllers\CardController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\IncomeController;
-use App\Http\Controllers\VaultController;
-use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\LoanController;
-use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\VaultController;
+use Illuminate\Support\Facades\Route;
+use Laravel\Fortify\Features;
 
 Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    //Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+    // Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -38,6 +39,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/vaults/{vault}', [VaultController::class, 'update'])->name('vaults.update');
     Route::delete('/vaults/{vault}', [VaultController::class, 'destroy'])->name('vaults.destroy');
 
+    // Tarjetas de crédito
+    Route::get('/cards', [CardController::class, 'index'])->name('cards.index');
+    Route::post('/cards', [CardController::class, 'store'])->name('cards.store');
+    Route::put('/cards/{card}', [CardController::class, 'update'])->name('cards.update');
+    Route::delete('/cards/{card}', [CardController::class, 'destroy'])->name('cards.destroy');
+
     // Suscripciones
     Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
     Route::post('/subscriptions', [SubscriptionController::class, 'store'])->name('subscriptions.store');
@@ -57,4 +64,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';
