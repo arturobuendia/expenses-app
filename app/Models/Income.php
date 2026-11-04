@@ -9,6 +9,7 @@ class Income extends Model
 {
     protected $fillable = [
         'category_id',
+        'vault_id',
         'amount',
         'description',
         'date',
@@ -25,5 +26,10 @@ class Income extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function vault(): BelongsTo
+    {
+        return $this->belongsTo(Vault::class);
     }
 }

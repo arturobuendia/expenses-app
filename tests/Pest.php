@@ -45,3 +45,20 @@ function something()
 {
     // ..
 }
+
+function makeVault(array $attributes = []): App\Models\Vault
+{
+    return App\Models\Vault::create(array_merge([
+        'name' => 'Cuenta Principal',
+        'initial_balance' => 1000,
+    ], $attributes));
+}
+
+function makeCategory(string $type = 'income'): App\Models\Category
+{
+    return App\Models\Category::create([
+        'name' => $type === 'income' ? 'Proyectos SaaS' : 'Comida',
+        'type' => $type,
+        'is_active' => true,
+    ]);
+}

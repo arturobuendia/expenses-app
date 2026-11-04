@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use App\Models\Expense;
 use App\Models\Income;
-use App\Models\Vault;
-use App\Models\Subscription;
 use App\Models\Loan;
+use App\Models\Subscription;
+use App\Models\Vault;
 use Carbon\Carbon;
+use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
@@ -32,18 +31,15 @@ class DashboardController extends Controller
         $netFlow = $totalIncomes - $totalExpenses;
 
         // 2. Tu Capital Total, Inversiones y Rendimientos
-        $vaults = Vault::orderByDesc('balance')->get();
-        $totalCapital = $vaults->sum('balance');
+        // El saldo de cada bóveda se calcula a partir de sus movimientos.
+        $vaults = Vault::withMovements()
+            ->get()
+            ->map(fn (Vault $vault) => $vault->withComputedBalance())
+            ->sortByDesc('balance')
+            ->values();
 
-        $monthlyYield = $vaults->sum(function ($vault) {
-            if ($vault->annual_yield_rate > 0) {
-                $effectiveBalance = ($vault->yield_cap && $vault->balance > $vault->yield_cap)
-                    ? $vault->yield_cap
-                    : $vault->balance;
-                return ($effectiveBalance * ($vault->annual_yield_rate / 100)) / 12;
-            }
-            return 0;
-        });
+        $totalCapital = $vaults->sum('balance');
+        $monthlyYield = $vaults->sum(fn (Vault $vault) => $vault->monthlyYield());
 
         // 3. Dinero en la calle (Préstamos pendientes)
         $pendingLoansAmount = Loan::where('is_paid', false)->sum('amount');
