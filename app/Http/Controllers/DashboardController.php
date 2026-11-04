@@ -7,13 +7,17 @@ use App\Models\Income;
 use App\Models\Loan;
 use App\Models\Subscription;
 use App\Models\Vault;
+use App\Services\SubscriptionBiller;
 use Carbon\Carbon;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(SubscriptionBiller $biller)
     {
+        // Los cobros de suscripciones vencidas se materializan al entrar.
+        $biller->run();
+
         $now = Carbon::now();
         $currentMonth = $now->month;
         $currentYear = $now->year;
