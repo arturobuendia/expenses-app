@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 
 const { formatCurrency, formatDate } = useFormatter();
@@ -22,11 +23,14 @@ const props = defineProps<{
         links: any[];
     };
     categories: Category[];
+    vaults: { id: number; name: string }[];
     totals: {
         total_amount: number;
         transaction_count: number;
         average_expense: number;
         biggest_expense: number;
+        transfer_amount: number;
+        transfer_count: number;
     };
     filters: {
         search?: string;
@@ -74,9 +78,11 @@ const editingId = ref<number | null>(null);
 
 const form = useForm({
     category_id: '',
+    vault_id: 'none',
     amount: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
+    is_transfer: false,
 });
 
 const openModal = (expense?: Expense) => {
@@ -84,13 +90,17 @@ const openModal = (expense?: Expense) => {
         isEditing.value = true;
         editingId.value = expense.id;
         form.category_id = expense.category_id.toString();
+        form.vault_id = expense.vault_id ? expense.vault_id.toString() : 'none';
         form.amount = expense.amount.toString();
         form.description = expense.description;
         form.date = expense.date;
+        form.is_transfer = expense.is_transfer;
     } else {
         isEditing.value = false;
         editingId.value = null;
         form.reset();
+        form.vault_id = 'none';
+        form.is_transfer = false;
         form.date = new Date().toISOString().split('T')[0];
     }
     isModalOpen.value = true;
@@ -105,6 +115,13 @@ const closeModal = () => {
 };
 
 const submitForm = () => {
+    form.transform((data) => ({
+        ...data,
+        vault_id: data.vault_id === 'none' ? null : data.vault_id,
+        // Una transferencia sin bóveda no tendría de dónde restar.
+        is_transfer: data.vault_id !== 'none' && data.is_transfer,
+    }));
+
     if (isEditing.value && editingId.value) {
         form.put(`/expenses/${editingId.value}`, {
             onSuccess: () => closeModal(),
@@ -211,6 +228,10 @@ const deleteExpense = (id: number) => {
                         <p class="text-3xl font-bold text-red-500">
                             -{{ formatCurrency(totals.total_amount) }}
                         </p>
+                        <p v-if="totals.transfer_count > 0" class="text-xs text-zinc-500 mt-1">
+                            +{{ formatCurrency(totals.transfer_amount) }} en {{ totals.transfer_count }}
+                            transferencia(s) sin contar como gasto
+                        </p>
                     </CardContent>
                 </Card>
 
@@ -255,6 +276,7 @@ const deleteExpense = (id: number) => {
                                     <TableHead class="text-zinc-400 font-medium">Fecha</TableHead>
                                     <TableHead class="text-zinc-400 font-medium">Descripción</TableHead>
                                     <TableHead class="text-zinc-400 font-medium">Categoría</TableHead>
+                                    <TableHead class="text-zinc-400 font-medium">Bóveda</TableHead>
                                     <TableHead class="text-zinc-400 font-medium text-right">Monto</TableHead>
                                     <TableHead class="text-zinc-400 font-medium text-right">Acciones</TableHead>
                                 </TableRow>
@@ -269,6 +291,15 @@ const deleteExpense = (id: number) => {
                                         <span
                                             class="inline-flex items-center rounded-md bg-zinc-800 px-2 py-1 text-xs font-medium text-zinc-300 ring-1 ring-inset ring-zinc-700">
                                             {{ expense.category.name }}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span v-if="expense.vault" class="inline-flex items-center rounded-md bg-zinc-800 px-2 py-1 text-xs font-medium text-zinc-300 ring-1 ring-inset ring-zinc-700">
+                                            {{ expense.vault.name }}
+                                        </span>
+                                        <span v-else class="text-xs text-zinc-600">-</span>
+                                        <span v-if="expense.is_transfer" class="ml-2 inline-flex items-center rounded-md bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-400 ring-1 ring-inset ring-amber-500/20">
+                                            Transferencia
                                         </span>
                                     </TableCell>
                                     <TableCell class="text-right text-red-400 font-medium">
@@ -287,7 +318,7 @@ const deleteExpense = (id: number) => {
                                 </TableRow>
                                 <TableRow v-if="expenses.data.length === 0"
                                     class="border-zinc-800 hover:bg-transparent">
-                                    <TableCell colspan="5" class="py-8 text-center text-zinc-500">
+                                    <TableCell colspan="6" class="py-8 text-center text-zinc-500">
                                         No se encontraron gastos con estos filtros.
                                     </TableCell>
                                 </TableRow>
@@ -350,6 +381,40 @@ const deleteExpense = (id: number) => {
                             </Select>
                             <span v-if="form.errors.category_id" class="text-red-500 text-xs">{{ form.errors.category_id
                                 }}</span>
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label class="text-zinc-400">Restar de bóveda <span class="text-xs text-zinc-600">(Opcional)</span></Label>
+                            <Select v-model="form.vault_id">
+                                <SelectTrigger class="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-zinc-500">
+                                    <SelectValue placeholder="No afecta ninguna bóveda" />
+                                </SelectTrigger>
+                                <SelectContent class="bg-zinc-950 border-zinc-800 text-zinc-100">
+                                    <SelectGroup>
+                                        <SelectItem value="none" class="focus:bg-zinc-800 focus:text-zinc-100">
+                                            No afecta bóveda (compra con tarjeta)
+                                        </SelectItem>
+                                        <SelectItem v-for="vault in vaults" :key="vault.id" :value="vault.id.toString()"
+                                            class="focus:bg-zinc-800 focus:text-zinc-100">
+                                            {{ vault.name }}
+                                        </SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            <span v-if="form.errors.vault_id" class="text-red-500 text-xs">{{ form.errors.vault_id
+                                }}</span>
+                        </div>
+
+                        <div v-if="form.vault_id !== 'none'" class="flex items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+                            <Checkbox id="is_transfer" v-model="form.is_transfer" class="mt-0.5 border-zinc-600" />
+                            <div class="space-y-1">
+                                <Label for="is_transfer" class="text-sm font-medium text-zinc-200 cursor-pointer">
+                                    Es pago de tarjeta o transferencia
+                                </Label>
+                                <p class="text-xs text-zinc-500">
+                                    Resta de la bóveda pero no cuenta como gasto del mes.
+                                </p>
+                            </div>
                         </div>
 
                         <DialogFooter class="pt-4 mt-2 border-t border-zinc-800">

@@ -19,8 +19,10 @@ class DashboardController extends Controller
         $currentYear = $now->year;
 
         // 1. Totales del mes actual (Ingresos vs Egresos aislados)
+        // Las transferencias no cuentan como gasto: son movimientos de saldo.
         $totalExpenses = Expense::whereMonth('date', $currentMonth)
             ->whereYear('date', $currentYear)
+            ->where('is_transfer', false)
             ->sum('amount');
 
         $totalIncomes = Income::whereMonth('date', $currentMonth)
@@ -51,8 +53,9 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // 5. Vistazo rápido a los últimos gastos
+        // 5. Vistazo rápido a los últimos gastos reales (sin transferencias)
         $latestExpenses = Expense::with('category')
+            ->where('is_transfer', false)
             ->orderByDesc('date')
             ->orderByDesc('id')
             ->take(5)

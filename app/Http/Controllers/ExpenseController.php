@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Expense;
 use App\Models\Category;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
+use App\Models\Expense;
+use App\Models\Vault;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 
 class ExpenseController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Expense::with('category');
+        $query = Expense::with(['category', 'vault']);
 
         // 1. Filtro de Búsqueda (Descripción)
         if ($request->filled('search')) {
-            $query->where('description', 'like', '%' . $request->search . '%');
+            $query->where('description', 'like', '%'.$request->search.'%');
         }
 
         // 2. Filtro por Categoría
@@ -40,14 +42,20 @@ class ExpenseController extends Controller
         // Si es 'all_time', no aplicamos where de fecha
 
         // Clonamos la query para calcular totales exactos sin que la paginación los corte
-        $totalsQuery = clone $query;
-        $filteredExpenses = $totalsQuery->get();
+        $filteredExpenses = (clone $query)->get();
+
+        // Las transferencias (ej. pago de tarjeta) mueven saldo pero no son gasto:
+        // si contaran, el mismo dinero se contaría dos veces.
+        $realExpenses = $filteredExpenses->where('is_transfer', false);
+        $transfers = $filteredExpenses->where('is_transfer', true);
 
         $totals = [
-            'total_amount' => $filteredExpenses->sum('amount'),
-            'transaction_count' => $filteredExpenses->count(),
-            'average_expense' => $filteredExpenses->count() > 0 ? $filteredExpenses->avg('amount') : 0,
-            'biggest_expense' => $filteredExpenses->max('amount') ?? 0,
+            'total_amount' => $realExpenses->sum('amount'),
+            'transaction_count' => $realExpenses->count(),
+            'average_expense' => $realExpenses->count() > 0 ? $realExpenses->avg('amount') : 0,
+            'biggest_expense' => $realExpenses->max('amount') ?? 0,
+            'transfer_amount' => $transfers->sum('amount'),
+            'transfer_count' => $transfers->count(),
         ];
 
         // 4. Paginamos (manteniendo los parámetros en la URL)
@@ -57,43 +65,60 @@ class ExpenseController extends Controller
             ->withQueryString();
 
         $categories = Category::active()->ofType('expense')->get(['id', 'name']);
+        $vaults = Vault::orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('Expenses/Index', [
             'expenses' => $expenses,
             'categories' => $categories,
+            'vaults' => $vaults,
             'totals' => $totals,
             'filters' => $request->only(['search', 'category_id', 'date_filter']), // Regresamos el estado
         ]);
     }
 
-    // ... (store, update y destroy se quedan exactamente igual)
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'amount' => 'required|numeric|min:0.01',
-            'description' => 'required|string|max:255',
-            'date' => 'required|date',
-        ]);
-        Expense::create($validated);
+        Expense::create($this->validatedData($request));
+
         return redirect()->back()->with('success', 'Gasto registrado correctamente.');
     }
 
     public function update(Request $request, Expense $expense)
     {
-        $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'amount' => 'required|numeric|min:0.01',
-            'description' => 'required|string|max:255',
-            'date' => 'required|date',
-        ]);
-        $expense->update($validated);
+        $expense->update($this->validatedData($request));
+
         return redirect()->back()->with('success', 'Gasto actualizado.');
     }
 
     public function destroy(Expense $expense)
     {
         $expense->delete();
+
         return redirect()->back()->with('success', 'Gasto eliminado.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validatedData(Request $request): array
+    {
+        $validated = $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'vault_id' => 'nullable|exists:vaults,id',
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'required|string|max:255',
+            'date' => 'required|date',
+            'is_transfer' => 'boolean',
+        ]);
+
+        $validated['is_transfer'] = $request->boolean('is_transfer');
+
+        if ($validated['is_transfer'] && empty($validated['vault_id'])) {
+            throw ValidationException::withMessages([
+                'vault_id' => 'Una transferencia necesita una bóveda de origen.',
+            ]);
+        }
+
+        return $validated;
     }
 }
