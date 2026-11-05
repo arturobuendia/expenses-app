@@ -1,16 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
-import { dashboard, home, login, register } from '@/routes';
-
-withDefaults(
-    defineProps<{
-        canRegister: boolean;
-    }>(),
-    {
-        canRegister: true,
-    },
-);
+import { dashboard, home, login } from '@/routes';
 
 const page = usePage();
 const name = page.props.name;
@@ -52,13 +43,6 @@ const features = [
                         >
                             Iniciar sesión
                         </Link>
-                        <Link
-                            v-if="canRegister"
-                            :href="register()"
-                            class="inline-block rounded-sm border border-[#7036d1] bg-[#7036d1] px-5 py-1.5 text-sm leading-normal text-white hover:border-[#5b2bb0] hover:bg-[#5b2bb0]"
-                        >
-                            Registrarse
-                        </Link>
                     </template>
                 </div>
             </nav>
@@ -98,7 +82,7 @@ const features = [
                                 :href="
                                     $page.props.auth.user
                                         ? dashboard()
-                                        : register()
+                                        : login()
                                 "
                                 class="inline-block rounded-sm border border-[#7036d1] bg-[#7036d1] px-5 py-1.5 text-sm leading-normal text-white hover:border-[#5b2bb0] hover:bg-[#5b2bb0]"
                             >
