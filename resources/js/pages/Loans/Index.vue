@@ -98,7 +98,7 @@ const deleteLoan = (id: number) => {
 
             <header class="mb-8 flex justify-between items-end">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight text-white">Préstamos</h1>
+                    <h1 class="font-display text-3xl font-bold tracking-tight text-white">Préstamos</h1>
                     <p class="text-zinc-400 mt-1">Cuentas por cobrar y dinero prestado.</p>
                 </div>
                 <Button @click="openModal()" class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200">
@@ -112,7 +112,7 @@ const deleteLoan = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Dinero por Cobrar</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-amber-400">
+                        <p class="font-mono text-3xl font-bold tabular-nums text-amber-400">
                             {{ formatCurrency(totals.pending_amount) }}
                         </p>
                     </CardContent>
@@ -123,7 +123,7 @@ const deleteLoan = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Préstamos Activos</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-zinc-100">{{ totals.pending_count }}</p>
+                        <p class="font-mono text-3xl font-bold tabular-nums text-zinc-100">{{ totals.pending_count }}</p>
                     </CardContent>
                 </Card>
 
@@ -132,7 +132,7 @@ const deleteLoan = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Dinero Recuperado</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-emerald-400/80">
+                        <p class="font-mono text-3xl font-bold tabular-nums text-emerald-400/80">
                             {{ formatCurrency(totals.recovered_amount) }}
                         </p>
                     </CardContent>
@@ -143,7 +143,7 @@ const deleteLoan = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Deudas Saldadas</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-zinc-500">{{ totals.recovered_count }}</p>
+                        <p class="font-mono text-3xl font-bold tabular-nums text-zinc-500">{{ totals.recovered_count }}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -170,7 +170,7 @@ const deleteLoan = (id: number) => {
                                     <TableCell class="font-medium text-zinc-200">{{ loan.debtor_name }}</TableCell>
                                     <TableCell class="text-zinc-400">{{ loan.description || 'Sin concepto' }}
                                     </TableCell>
-                                    <TableCell class="text-right text-amber-400 font-medium">
+                                    <TableCell class="font-mono font-medium tabular-nums text-right text-amber-400">
                                         {{ formatCurrency(loan.amount) }}
                                     </TableCell>
                                     <TableCell class="text-center">

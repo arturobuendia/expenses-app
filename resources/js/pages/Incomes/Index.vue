@@ -132,7 +132,7 @@ const deleteIncome = (id: number) => {
             
             <header class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight text-white">Historial de Ingresos</h1>
+                    <h1 class="font-display text-3xl font-bold tracking-tight text-white">Historial de Ingresos</h1>
                     <p class="text-zinc-400 mt-1">Registro de entradas de dinero, sueldos y rendimientos.</p>
                 </div>
                 <div class="flex items-center gap-3">
@@ -193,7 +193,7 @@ const deleteIncome = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Total Filtrado</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-emerald-500">
+                        <p class="font-mono text-3xl font-bold tabular-nums text-emerald-500">
                             +{{ formatCurrency(totals.total_amount) }}
                         </p>
                     </CardContent>
@@ -204,7 +204,7 @@ const deleteIncome = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Operaciones</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-zinc-100">{{ totals.transaction_count }}</p>
+                        <p class="font-mono text-3xl font-bold tabular-nums text-zinc-100">{{ totals.transaction_count }}</p>
                     </CardContent>
                 </Card>
 
@@ -213,7 +213,7 @@ const deleteIncome = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Promedio por Ingreso</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-emerald-400/80">
+                        <p class="font-mono text-3xl font-bold tabular-nums text-emerald-400/80">
                             +{{ formatCurrency(totals.average_income) }}
                         </p>
                     </CardContent>
@@ -224,7 +224,7 @@ const deleteIncome = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Ingreso Mayor</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-emerald-600">
+                        <p class="font-mono text-3xl font-bold tabular-nums text-emerald-600">
                             +{{ formatCurrency(totals.biggest_income) }}
                         </p>
                     </CardContent>
@@ -260,7 +260,7 @@ const deleteIncome = (id: number) => {
                                         </span>
                                         <span v-else class="text-xs text-zinc-600">Sin bóveda</span>
                                     </TableCell>
-                                    <TableCell class="text-right text-emerald-400 font-medium">
+                                    <TableCell class="font-mono font-medium tabular-nums text-right text-emerald-400">
                                         +{{ formatCurrency(income.amount) }}
                                     </TableCell>
                                     <TableCell class="text-right space-x-2">

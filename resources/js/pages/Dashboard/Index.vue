@@ -46,7 +46,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
             <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight text-white">Resumen de {{ currentMonthName }}</h1>
+                    <h1 class="font-display text-3xl font-bold tracking-tight text-white">Resumen de {{ currentMonthName }}</h1>
                     <p class="text-zinc-400 mt-1">Tu patrimonio, rentabilidades y flujo mensual.</p>
                 </div>
             </header>
@@ -57,7 +57,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <CardTitle class="text-sm font-medium text-zinc-400">Ingresos del Mes</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-emerald-500">
+                        <p class="font-mono text-3xl font-bold tabular-nums text-emerald-500">
                             {{ formatCurrency(totals.incomes) }}
                         </p>
                     </CardContent>
@@ -68,7 +68,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <CardTitle class="text-sm font-medium text-zinc-400">Gastos del Mes</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-red-500">
+                        <p class="font-mono text-3xl font-bold tabular-nums text-red-500">
                             {{ formatCurrency(totals.expenses) }}
                         </p>
                     </CardContent>
@@ -80,7 +80,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </CardHeader>
                     <CardContent>
                         <p :class="[
-                            'text-3xl font-bold',
+                            'font-mono text-3xl font-bold tabular-nums',
                             totals.net_flow >= 0 ? 'text-emerald-400' : 'text-red-500'
                         ]">
                             {{ totals.net_flow > 0 ? '+' : '' }}{{ formatCurrency(totals.net_flow) }}
@@ -94,14 +94,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <CardTitle class="text-sm font-medium text-zinc-400">Patrimonio Total</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-zinc-100">
+                        <p class="font-mono text-3xl font-bold tabular-nums text-zinc-100">
                             {{ formatCurrency(totals.capital) }}
                         </p>
                         <div class="flex gap-3 mt-1 text-xs">
-                            <span v-if="totals.monthly_yield > 0" class="text-emerald-400/80 font-medium">
+                            <span v-if="totals.monthly_yield > 0" class="font-mono tabular-nums text-emerald-400/80 font-medium">
                                 +{{ formatCurrency(totals.monthly_yield) }}/mes
                             </span>
-                            <span v-if="totals.pending_loans > 0" class="text-amber-400/80 font-medium"
+                            <span v-if="totals.pending_loans > 0" class="font-mono tabular-nums text-amber-400/80 font-medium"
                                 title="Préstamos por cobrar">
                                 {{ formatCurrency(totals.pending_loans) }} en la calle
                             </span>
@@ -123,7 +123,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     <p v-if="vault.annual_yield_rate" class="text-xs text-zinc-500">Rendimiento: {{
                                         vault.annual_yield_rate }}%</p>
                                 </div>
-                                <span class="font-semibold">{{ formatCurrency(vault.balance) }}</span>
+                                <span class="font-mono font-semibold tabular-nums">{{ formatCurrency(vault.balance) }}</span>
                             </div>
                         </CardContent>
                     </Card>
@@ -139,7 +139,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     <p class="font-medium text-zinc-200">{{ sub.name }}</p>
                                     <p class="text-xs text-zinc-500">Cobro: {{ formatDate(sub.next_billing_date) }}</p>
                                 </div>
-                                <span class="text-zinc-300 font-medium">-{{ formatCurrency(sub.amount) }}</span>
+                                <span class="font-mono font-medium tabular-nums text-zinc-300">-{{ formatCurrency(sub.amount) }}</span>
                             </div>
                             <div v-if="upcomingSubscriptions.length === 0"
                                 class="text-center text-sm text-zinc-500 py-2">
@@ -180,7 +180,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                                     {{ expense.category.name }}
                                                 </span>
                                             </TableCell>
-                                            <TableCell class="text-right text-red-400 font-medium">
+                                            <TableCell class="font-mono font-medium tabular-nums text-right text-red-400">
                                                 -{{ formatCurrency(expense.amount) }}
                                             </TableCell>
                                         </TableRow>

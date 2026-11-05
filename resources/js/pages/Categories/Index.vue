@@ -94,7 +94,7 @@ const toggleActive = (category: Category) => {
 
             <header class="mb-8 flex justify-between items-end">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight text-white">Catálogo de Categorías</h1>
+                    <h1 class="font-display text-3xl font-bold tracking-tight text-white">Catálogo de Categorías</h1>
                     <p class="text-zinc-400 mt-1">El diccionario estricto que utiliza la IA para clasificar.</p>
                 </div>
                 <Button @click="openModal()" class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200">

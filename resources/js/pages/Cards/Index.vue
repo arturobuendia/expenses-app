@@ -100,7 +100,7 @@ const nextPending = (card: Card) =>
 
             <header class="mb-8 flex justify-between items-end">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight text-white">Tarjetas de Crédito</h1>
+                    <h1 class="font-display text-3xl font-bold tracking-tight text-white">Tarjetas de Crédito</h1>
                     <p class="text-zinc-400 mt-1">Cortes, fechas límite de pago y cupo disponible.</p>
                 </div>
                 <Button @click="openModal()" class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200">
@@ -114,7 +114,7 @@ const nextPending = (card: Card) =>
                         <CardTitle class="text-sm font-medium text-zinc-400">Tarjetas</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-zinc-100">{{ totals.cards }}</p>
+                        <p class="font-mono text-3xl font-bold tabular-nums text-zinc-100">{{ totals.cards }}</p>
                     </CardContent>
                 </CardPanel>
 
@@ -123,7 +123,7 @@ const nextPending = (card: Card) =>
                         <CardTitle class="text-sm font-medium text-zinc-400">Límite Total</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-zinc-100">{{ formatCurrency(totals.credit_limit) }}</p>
+                        <p class="font-mono text-3xl font-bold tabular-nums text-zinc-100">{{ formatCurrency(totals.credit_limit) }}</p>
                     </CardContent>
                 </CardPanel>
 
@@ -132,7 +132,7 @@ const nextPending = (card: Card) =>
                         <CardTitle class="text-sm font-medium text-zinc-400">Deuda Total</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-red-400">{{ formatCurrency(totals.debt) }}</p>
+                        <p class="font-mono text-3xl font-bold tabular-nums text-red-400">{{ formatCurrency(totals.debt) }}</p>
                     </CardContent>
                 </CardPanel>
 
@@ -141,7 +141,7 @@ const nextPending = (card: Card) =>
                         <CardTitle class="text-sm font-medium text-zinc-400">Cupo Disponible</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-emerald-400">{{ formatCurrency(totals.available_credit) }}</p>
+                        <p class="font-mono text-3xl font-bold tabular-nums text-emerald-400">{{ formatCurrency(totals.available_credit) }}</p>
                     </CardContent>
                 </CardPanel>
             </div>
@@ -172,25 +172,25 @@ const nextPending = (card: Card) =>
                                             {{ formatDate(card.cycle.period_end) }}
                                         </div>
                                     </TableCell>
-                                    <TableCell class="text-right text-zinc-300">
+                                    <TableCell class="font-mono tabular-nums text-right text-zinc-300">
                                         {{ formatCurrency(card.credit_limit) }}
                                     </TableCell>
                                     <TableCell class="text-right text-zinc-300">
                                         <div>{{ card.cut_off_day }} / {{ card.payment_day }}</div>
                                         <div class="text-xs text-zinc-500">día de corte / pago</div>
                                     </TableCell>
-                                    <TableCell class="text-right font-bold"
+                                    <TableCell class="font-mono font-bold tabular-nums text-right"
                                         :class="(card.debt ?? 0) > 0 ? 'text-red-400' : 'text-zinc-300'">
                                         {{ formatCurrency(card.debt ?? 0) }}
                                     </TableCell>
-                                    <TableCell class="text-right font-medium"
+                                    <TableCell class="font-mono font-medium tabular-nums text-right"
                                         :class="(card.available_credit ?? 0) < 0 ? 'text-red-500' : 'text-emerald-400'">
                                         {{ formatCurrency(card.available_credit ?? 0) }}
                                     </TableCell>
                                     <TableCell class="text-right text-zinc-300">
                                         <template v-if="nextPending(card)">
                                             <div>{{ formatDate(nextPending(card)!.due_date) }}</div>
-                                            <div class="text-xs text-amber-400">
+                                            <div class="font-mono text-xs tabular-nums text-amber-400">
                                                 {{ formatCurrency(nextPending(card)!.pending_amount ?? 0) }} pendiente
                                             </div>
                                         </template>
