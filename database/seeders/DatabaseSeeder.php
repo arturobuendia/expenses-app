@@ -8,22 +8,14 @@ use App\Models\Expense;
 use App\Models\Income;
 use App\Models\Loan;
 use App\Models\Subscription;
-use App\Models\User;
 use App\Models\Vault;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-
-        User::create([
-            'name' => 'Arturo',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('REDACTED'),
-        ]);
 
         $now = Carbon::now();
 
