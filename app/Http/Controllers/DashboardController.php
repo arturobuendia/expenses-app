@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Expense;
 use App\Models\Income;
+use App\Models\Installment;
 use App\Models\Loan;
 use App\Models\Subscription;
 use App\Models\Vault;
@@ -24,10 +25,20 @@ class DashboardController extends Controller
 
         // 1. Totales del mes actual (Ingresos vs Egresos aislados)
         // Las transferencias no cuentan como gasto: son movimientos de saldo.
-        $totalExpenses = Expense::whereMonth('date', $currentMonth)
-            ->whereYear('date', $currentYear)
+        // Una compra a MSI tampoco pesa completa en el mes en que se hizo: solo
+        // la parcialidad que se factura.
+        $monthStart = $now->copy()->startOfMonth();
+        $monthEnd = $now->copy()->endOfMonth();
+
+        $cashExpenses = Expense::whereBetween('date', [$monthStart->toDateString(), $monthEnd->toDateString()])
             ->where('is_transfer', false)
+            ->where('installment_count', 1)
             ->sum('amount');
+
+        $installmentsThisMonth = Installment::whereBetween('cut_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->sum('amount');
+
+        $totalExpenses = $cashExpenses + $installmentsThisMonth;
 
         $totalIncomes = Income::whereMonth('date', $currentMonth)
             ->whereYear('date', $currentYear)

@@ -43,6 +43,14 @@ class CardStatement extends Model
 
     public function totalAmount(): float
     {
-        return (float) ($this->total_charges ?? $this->charges()->sum('amount'));
+        $charges = (float) ($this->total_charges ?? $this->charges()->sum('amount'));
+
+        $installments = $this->installment_total
+            ?? (float) Installment::query()
+                ->where('card_id', $this->card_id)
+                ->whereDate('cut_date', $this->cut_date)
+                ->sum('amount');
+
+        return $charges + (float) $installments;
     }
 }
