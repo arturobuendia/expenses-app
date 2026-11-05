@@ -115,7 +115,7 @@ const deleteSubscription = (id: number) => {
 
             <header class="mb-8 flex justify-between items-end">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight text-white">Pagos Fijos y Suscripciones</h1>
+                    <h1 class="font-display text-3xl font-bold tracking-tight text-white">Pagos Fijos y Suscripciones</h1>
                     <p class="text-zinc-400 mt-1">Controla tus servicios mensuales y anuales.</p>
                 </div>
                 <Button @click="openModal()" class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200">
@@ -129,7 +129,7 @@ const deleteSubscription = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Servicios Activos</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-zinc-100">{{ totals.active_count }}</p>
+                        <p class="font-mono text-3xl font-bold tabular-nums text-zinc-100">{{ totals.active_count }}</p>
                     </CardContent>
                 </Card>
 
@@ -138,7 +138,7 @@ const deleteSubscription = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Gasto Mensual</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-red-400">
+                        <p class="font-mono text-3xl font-bold tabular-nums text-red-400">
                             -{{ formatCurrency(totals.monthly_cost) }}
                         </p>
                     </CardContent>
@@ -149,7 +149,7 @@ const deleteSubscription = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Proyección Anual</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-red-400/80">
+                        <p class="font-mono text-3xl font-bold tabular-nums text-red-400/80">
                             -{{ formatCurrency(totals.annual_projection) }}
                         </p>
                     </CardContent>
@@ -160,7 +160,7 @@ const deleteSubscription = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Servicios Pausados</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-zinc-500">{{ totals.paused_count }}</p>
+                        <p class="font-mono text-3xl font-bold tabular-nums text-zinc-500">{{ totals.paused_count }}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -203,7 +203,7 @@ const deleteSubscription = (id: number) => {
                                         </span>
                                     </TableCell>
                                     <TableCell class="text-right font-medium text-zinc-100">
-                                        {{ formatCurrency(sub.amount) }}
+                                        <span class="font-mono tabular-nums">{{ formatCurrency(sub.amount) }}</span>
                                         <div class="text-xs text-zinc-500">
                                             {{ sub.frequency === 'annual' ? 'anual' : 'mensual' }}
                                         </div>

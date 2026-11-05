@@ -93,7 +93,7 @@ const deleteVault = (id: number) => {
 
             <header class="mb-8 flex justify-between items-end">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight text-white">Tus Bóvedas</h1>
+                    <h1 class="font-display text-3xl font-bold tracking-tight text-white">Tus Bóvedas</h1>
                     <p class="text-zinc-400 mt-1">Gestiona tu capital, cuentas y topes de inversión.</p>
                 </div>
                 <Button @click="openModal()" class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200">
@@ -107,7 +107,7 @@ const deleteVault = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Total Bóvedas</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-zinc-100">{{ totals.accounts }}</p>
+                        <p class="font-mono text-3xl font-bold tabular-nums text-zinc-100">{{ totals.accounts }}</p>
                     </CardContent>
                 </Card>
 
@@ -116,7 +116,7 @@ const deleteVault = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Capital Total</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-zinc-100">{{ formatCurrency(totals.capital) }}</p>
+                        <p class="font-mono text-3xl font-bold tabular-nums text-zinc-100">{{ formatCurrency(totals.capital) }}</p>
                     </CardContent>
                 </Card>
 
@@ -125,7 +125,7 @@ const deleteVault = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Rendimiento Diario</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-emerald-400">
+                        <p class="font-mono text-3xl font-bold tabular-nums text-emerald-400">
                             +{{ formatCurrency(totals.daily_yield) }}
                         </p>
                     </CardContent>
@@ -136,7 +136,7 @@ const deleteVault = (id: number) => {
                         <CardTitle class="text-sm font-medium text-zinc-400">Rendimiento Mensual</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p class="text-3xl font-bold text-emerald-400">
+                        <p class="font-mono text-3xl font-bold tabular-nums text-emerald-400">
                             +{{ formatCurrency(totals.monthly_yield) }}
                         </p>
                     </CardContent>
@@ -165,19 +165,19 @@ const deleteVault = (id: number) => {
                                     <TableCell class="text-right">
                                         <div class="text-sm text-zinc-300">{{ vault.annual_yield_rate ?
                                             `${vault.annual_yield_rate}%` : '-' }}</div>
-                                        <div class="text-xs text-zinc-500">{{ vault.yield_cap ? `Tope:
+                                        <div class="font-mono text-xs tabular-nums text-zinc-500">{{ vault.yield_cap ? `Tope:
                                             ${formatCurrency(vault.yield_cap)}` : 'Sin tope' }}</div>
                                     </TableCell>
-                                    <TableCell class="text-right text-emerald-400/80 font-medium">
+                                    <TableCell class="font-mono font-medium tabular-nums text-right text-emerald-400/80">
                                         {{ vault.daily_yield > 0 ? `+${formatCurrency(vault.daily_yield)}` : '-' }}
                                     </TableCell>
-                                    <TableCell class="text-right text-emerald-400 font-medium">
+                                    <TableCell class="font-mono font-medium tabular-nums text-right text-emerald-400">
                                         {{ vault.monthly_yield > 0 ? `+${formatCurrency(vault.monthly_yield)}` : '-' }}
                                     </TableCell>
-                                    <TableCell class="text-right text-zinc-500 font-medium">
+                                    <TableCell class="font-mono font-medium tabular-nums text-right text-zinc-500">
                                         {{ formatCurrency(vault.initial_balance) }}
                                     </TableCell>
-                                    <TableCell class="text-right font-bold text-zinc-100">
+                                    <TableCell class="font-mono font-bold tabular-nums text-right text-zinc-100">
                                         {{ formatCurrency(vault.balance) }}
                                     </TableCell>
                                     <TableCell class="text-right space-x-2">
