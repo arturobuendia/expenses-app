@@ -30,12 +30,14 @@ class DashboardController extends Controller
         $monthStart = $now->copy()->startOfMonth();
         $monthEnd = $now->copy()->endOfMonth();
 
-        $cashExpenses = Expense::whereBetween('date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+        $cashExpenses = Expense::whereDate('date', '>=', $monthStart->toDateString())
+            ->whereDate('date', '<=', $monthEnd->toDateString())
             ->where('is_transfer', false)
             ->where('installment_count', 1)
             ->sum('amount');
 
-        $installmentsThisMonth = Installment::whereBetween('cut_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+        $installmentsThisMonth = Installment::whereDate('cut_date', '>=', $monthStart->toDateString())
+            ->whereDate('cut_date', '<=', $monthEnd->toDateString())
             ->sum('amount');
 
         $totalExpenses = $cashExpenses + $installmentsThisMonth;

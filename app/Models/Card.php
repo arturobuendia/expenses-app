@@ -7,6 +7,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 class Card extends Model
 {
@@ -117,19 +118,35 @@ class Card extends Model
 
     /**
      * Crea (o reutiliza) el estado de cuenta del ciclo de esa fecha.
+     *
+     * El cast `date` guarda `Y-m-d H:i:s`, así que una igualdad simple contra
+     * `Y-m-d` nunca encuentra la fila existente y el índice único estalla.
+     * Por eso se compara con whereDate.
      */
     public function statementFor(CarbonInterface|string $date): CardStatement
     {
         $cycle = $this->cycleFor($date);
+        $cut = $cycle['cut_date']->toDateString();
 
-        return $this->statements()->firstOrCreate(
-            ['cut_date' => $cycle['cut_date']->toDateString()],
-            [
-                'period_start' => $cycle['period_start']->toDateString(),
-                'period_end' => $cycle['period_end']->toDateString(),
-                'due_date' => $cycle['due_date']->toDateString(),
-            ]
-        );
+        $existing = $this->statements()->whereDate('cut_date', $cut)->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        $attributes = [
+            'cut_date' => $cut,
+            'period_start' => $cycle['period_start']->toDateString(),
+            'period_end' => $cycle['period_end']->toDateString(),
+            'due_date' => $cycle['due_date']->toDateString(),
+        ];
+
+        try {
+            return $this->statements()->create($attributes);
+        } catch (UniqueConstraintViolationException) {
+            // Otro request creó el mismo corte entre el first() y el create().
+            return $this->statements()->whereDate('cut_date', $cut)->firstOrFail();
+        }
     }
 
     /**
