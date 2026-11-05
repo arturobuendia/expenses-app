@@ -131,12 +131,7 @@ const nextPending = (card: Card) =>
                         Cortes, fechas límite de pago y cupo disponible.
                     </p>
                 </div>
-                <Button
-                    @click="openModal()"
-                    class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-                >
-                    + Nueva Tarjeta
-                </Button>
+                <Button @click="openModal()"> + Nueva Tarjeta </Button>
             </header>
 
             <div
@@ -506,11 +501,7 @@ const nextPending = (card: Card) =>
                             >
                                 Cancelar
                             </Button>
-                            <Button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-                            >
+                            <Button type="submit" :disabled="form.processing">
                                 {{
                                     form.processing ? 'Guardando...' : 'Guardar'
                                 }}

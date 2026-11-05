@@ -221,12 +221,7 @@ const deleteExpense = (id: number) => {
                         </svg>
                         Actualizar
                     </Button>
-                    <Button
-                        @click="openModal()"
-                        class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-                    >
-                        + Nuevo Gasto
-                    </Button>
+                    <Button @click="openModal()"> + Nuevo Gasto </Button>
                 </div>
             </header>
 
@@ -786,11 +781,7 @@ const deleteExpense = (id: number) => {
                             >
                                 Cancelar
                             </Button>
-                            <Button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-                            >
+                            <Button type="submit" :disabled="form.processing">
                                 {{
                                     form.processing ? 'Guardando...' : 'Guardar'
                                 }}
