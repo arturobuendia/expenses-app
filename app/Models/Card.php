@@ -140,10 +140,31 @@ class Card extends Model
      */
     public function settledStatements(): \Illuminate\Support\Collection
     {
+        // Las parcialidades de MSI no traen estado de cuenta; si el ciclo ya
+        // cortó, se materializa para que aparezca con su fecha límite.
+        Installment::query()
+            ->where('card_id', $this->id)
+            ->whereDate('cut_date', '<=', now()->toDateString())
+            ->distinct()
+            ->pluck('cut_date')
+            ->each(fn ($cut) => $this->statementFor($cut));
+
         $statements = $this->statements()
             ->withSum('charges as total_charges', 'amount')
             ->orderBy('cut_date')
             ->get();
+
+        // Las parcialidades no viven en el estado de cuenta, se facturan por
+        // fecha de corte. Se agrupan una sola vez para no hacer N+1.
+        $installmentsByCut = Installment::query()
+            ->where('card_id', $this->id)
+            ->get()
+            ->groupBy(fn (Installment $installment) => $installment->cut_date->toDateString())
+            ->map(fn ($group) => (float) $group->sum('amount'));
+
+        $statements->each(function (CardStatement $statement) use ($installmentsByCut) {
+            $statement->installment_total = $installmentsByCut[$statement->cut_date->toDateString()] ?? 0.0;
+        });
 
         $pool = (float) $this->payments()->sum('amount');
 
@@ -163,7 +184,7 @@ class Card extends Model
     /**
      * Día de corte del mes. El 31 se recorta al último día disponible.
      */
-    private function cutDateFor(int $year, int $month): Carbon
+    public function cutDateFor(int $year, int $month): Carbon
     {
         $firstOfMonth = Carbon::create($year, $month, 1)->startOfDay();
         $day = min($this->cut_off_day, $firstOfMonth->daysInMonth);

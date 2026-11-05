@@ -25,6 +25,7 @@ export interface Expense {
     description: string;
     date: string;
     is_transfer: boolean;
+    installment_count: number;
     category: Category;
     vault?: Vault | null;
     card?: Card | null;

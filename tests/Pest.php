@@ -62,3 +62,14 @@ function makeCategory(string $type = 'income'): App\Models\Category
         'is_active' => true,
     ]);
 }
+
+function makeCard(array $attributes = []): App\Models\Card
+{
+    return App\Models\Card::create(array_merge([
+        'name' => 'BBVA Azul',
+        'credit_limit' => 10000,
+        'cut_off_day' => 10,
+        'payment_day' => 25,
+        'is_active' => true,
+    ], $attributes));
+}

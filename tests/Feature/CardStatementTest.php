@@ -1,19 +1,7 @@
 <?php
 
-use App\Models\Card;
 use App\Models\Expense;
 use App\Models\User;
-
-function makeCard(array $attributes = []): Card
-{
-    return Card::create(array_merge([
-        'name' => 'BBVA Azul',
-        'credit_limit' => 10000,
-        'cut_off_day' => 10,
-        'payment_day' => 25,
-        'is_active' => true,
-    ], $attributes));
-}
 
 test('el ciclo agrupa las compras desde el corte anterior hasta el corte actual', function () {
     $card = makeCard();

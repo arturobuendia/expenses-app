@@ -85,6 +85,7 @@ const form = useForm({
     description: '',
     date: new Date().toISOString().split('T')[0],
     is_transfer: false,
+    installment_count: '1',
 });
 
 const openModal = (expense?: Expense) => {
@@ -98,6 +99,7 @@ const openModal = (expense?: Expense) => {
         form.description = expense.description;
         form.date = expense.date;
         form.is_transfer = expense.is_transfer;
+        form.installment_count = expense.installment_count.toString();
     } else {
         isEditing.value = false;
         editingId.value = null;
@@ -105,6 +107,7 @@ const openModal = (expense?: Expense) => {
         form.vault_id = 'none';
         form.card_id = 'none';
         form.is_transfer = false;
+        form.installment_count = '1';
         form.date = new Date().toISOString().split('T')[0];
     }
     isModalOpen.value = true;
@@ -128,6 +131,7 @@ const submitForm = () => {
         vault_id: data.vault_id === 'none' || (usesCard && !data.is_transfer) ? null : data.vault_id,
         // Una transferencia sin bóveda no tendría de dónde restar.
         is_transfer: data.vault_id !== 'none' && data.is_transfer,
+        installment_count: usesCard && !data.is_transfer ? data.installment_count : '1',
     }));
 
     if (isEditing.value && editingId.value) {
@@ -240,6 +244,10 @@ const deleteExpense = (id: number) => {
                             +{{ formatCurrency(totals.transfer_amount) }} en {{ totals.transfer_count }}
                             transferencia(s) sin contar como gasto
                         </p>
+                        <p class="text-xs text-zinc-600 mt-1">
+                            Es el total comprado. Las compras a MSI cuentan completas aquí y prorrateadas en el
+                            dashboard.
+                        </p>
                     </CardContent>
                 </Card>
 
@@ -311,6 +319,9 @@ const deleteExpense = (id: number) => {
                                         <span v-else class="text-xs text-zinc-600">-</span>
                                         <span v-if="expense.is_transfer" class="ml-2 inline-flex items-center rounded-md bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-400 ring-1 ring-inset ring-amber-500/20">
                                             Transferencia
+                                        </span>
+                                        <span v-if="expense.installment_count > 1" class="ml-2 inline-flex items-center rounded-md bg-sky-500/10 px-2 py-1 text-xs font-medium text-sky-300 ring-1 ring-inset ring-sky-500/20">
+                                            {{ expense.installment_count }} MSI
                                         </span>
                                     </TableCell>
                                     <TableCell class="text-right text-red-400 font-medium">
@@ -438,6 +449,19 @@ const deleteExpense = (id: number) => {
                                 Este cargo cae en el corte de la tarjeta y no sale de ninguna bóveda.
                             </p>
                             <span v-if="form.errors.card_id" class="text-red-500 text-xs">{{ form.errors.card_id }}</span>
+                        </div>
+
+                        <div v-if="form.card_id !== 'none' && !form.is_transfer" class="space-y-2">
+                            <Label for="installment_count" class="text-zinc-400">Meses sin intereses</Label>
+                            <Input id="installment_count" v-model="form.installment_count" type="number" min="1" max="48"
+                                class="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-zinc-500"
+                                placeholder="1" />
+                            <p class="text-xs text-zinc-500">
+                                Con 1 se cobra completo en el corte. Con más, el gasto se reparte en parcialidades
+                                mensuales y el dashboard cuenta solo la del mes.
+                            </p>
+                            <span v-if="form.errors.installment_count" class="text-red-500 text-xs">{{
+                                form.errors.installment_count }}</span>
                         </div>
 
                         <div v-if="form.vault_id !== 'none'" class="flex items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">

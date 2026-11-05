@@ -81,7 +81,8 @@ class ExpenseController extends Controller
 
     public function store(Request $request)
     {
-        Expense::create($this->validatedData($request));
+        $expense = Expense::create($this->validatedData($request));
+        $expense->syncInstallments();
 
         return redirect()->back()->with('success', 'Gasto registrado correctamente.');
     }
@@ -89,6 +90,7 @@ class ExpenseController extends Controller
     public function update(Request $request, Expense $expense)
     {
         $expense->update($this->validatedData($request));
+        $expense->syncInstallments();
 
         return redirect()->back()->with('success', 'Gasto actualizado.');
     }
@@ -113,13 +115,28 @@ class ExpenseController extends Controller
             'description' => 'required|string|max:255',
             'date' => 'required|date',
             'is_transfer' => 'boolean',
+            'installment_count' => 'nullable|integer|min:1|max:48',
         ]);
 
         $validated['is_transfer'] = $request->boolean('is_transfer');
+        $validated['installment_count'] = (int) ($validated['installment_count'] ?? 1);
 
         if ($validated['is_transfer'] && empty($validated['vault_id'])) {
             throw ValidationException::withMessages([
                 'vault_id' => 'Una transferencia necesita una bóveda de origen.',
+            ]);
+        }
+
+        // Las parcialidades solo existen sobre una tarjeta.
+        if ($validated['installment_count'] > 1 && empty($validated['card_id'])) {
+            throw ValidationException::withMessages([
+                'card_id' => 'Los meses sin intereses necesitan una tarjeta.',
+            ]);
+        }
+
+        if ($validated['installment_count'] > 1 && $validated['is_transfer']) {
+            throw ValidationException::withMessages([
+                'installment_count' => 'Una transferencia no se puede diferir a meses.',
             ]);
         }
 
@@ -132,8 +149,9 @@ class ExpenseController extends Controller
         }
 
         // El cargo se asigna al corte que le corresponde. Los pagos no
-        // pertenecen a un estado de cuenta: lo liquidan.
-        if (! empty($validated['card_id']) && ! $validated['is_transfer']) {
+        // pertenecen a un estado de cuenta: lo liquidan. Una compra diferida
+        // tampoco: se reparte en parcialidades que cruzan varios cortes.
+        if (! empty($validated['card_id']) && ! $validated['is_transfer'] && $validated['installment_count'] === 1) {
             $card = Card::findOrFail($validated['card_id']);
             $validated['card_statement_id'] = $card->statementFor($validated['date'])->id;
         } else {
