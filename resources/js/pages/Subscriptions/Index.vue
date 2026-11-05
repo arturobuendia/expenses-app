@@ -143,12 +143,7 @@ const deleteSubscription = (id: number) => {
                         Controla tus servicios mensuales y anuales.
                     </p>
                 </div>
-                <Button
-                    @click="openModal()"
-                    class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-                >
-                    + Nueva Suscripción
-                </Button>
+                <Button @click="openModal()"> + Nueva Suscripción </Button>
             </header>
 
             <div
@@ -570,11 +565,7 @@ const deleteSubscription = (id: number) => {
                             >
                                 Cancelar
                             </Button>
-                            <Button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-                            >
+                            <Button type="submit" :disabled="form.processing">
                                 {{
                                     form.processing ? 'Guardando...' : 'Guardar'
                                 }}

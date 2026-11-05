@@ -120,12 +120,7 @@ const deleteVault = (id: number) => {
                         Gestiona tu capital, cuentas y topes de inversión.
                     </p>
                 </div>
-                <Button
-                    @click="openModal()"
-                    class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-                >
-                    + Nueva Bóveda
-                </Button>
+                <Button @click="openModal()"> + Nueva Bóveda </Button>
             </header>
 
             <div
@@ -447,11 +442,7 @@ const deleteVault = (id: number) => {
                             >
                                 Cancelar
                             </Button>
-                            <Button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-                            >
+                            <Button type="submit" :disabled="form.processing">
                                 {{
                                     form.processing ? 'Guardando...' : 'Guardar'
                                 }}

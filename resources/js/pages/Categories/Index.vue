@@ -123,12 +123,7 @@ const toggleActive = (category: Category) => {
                         clasificar.
                     </p>
                 </div>
-                <Button
-                    @click="openModal()"
-                    class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-                >
-                    + Nueva Categoría
-                </Button>
+                <Button @click="openModal()"> + Nueva Categoría </Button>
             </header>
 
             <Card class="max-w-4xl border-zinc-800 bg-zinc-900 text-zinc-100">
@@ -349,11 +344,7 @@ const toggleActive = (category: Category) => {
                             >
                                 Cancelar
                             </Button>
-                            <Button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-                            >
+                            <Button type="submit" :disabled="form.processing">
                                 {{
                                     form.processing ? 'Guardando...' : 'Guardar'
                                 }}

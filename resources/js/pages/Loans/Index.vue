@@ -119,12 +119,7 @@ const deleteLoan = (id: number) => {
                         Cuentas por cobrar y dinero prestado.
                     </p>
                 </div>
-                <Button
-                    @click="openModal()"
-                    class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-                >
-                    + Nuevo Préstamo
-                </Button>
+                <Button @click="openModal()"> + Nuevo Préstamo </Button>
             </header>
 
             <div
@@ -412,11 +407,7 @@ const deleteLoan = (id: number) => {
                             >
                                 Cancelar
                             </Button>
-                            <Button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
-                            >
+                            <Button type="submit" :disabled="form.processing">
                                 {{
                                     form.processing ? 'Guardando...' : 'Guardar'
                                 }}
