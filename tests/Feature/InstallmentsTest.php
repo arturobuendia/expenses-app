@@ -187,3 +187,45 @@ test('una transferencia no se puede diferir a meses', function () {
     $response->assertSessionHasErrors('installment_count');
     expect(Expense::count())->toBe(0);
 });
+
+test('un gasto del último día del mes sí cuenta en el dashboard', function () {
+    $this->travelTo('2026-11-30');
+
+    $user = User::factory()->create();
+    $category = makeCategory('expense');
+
+    Expense::create([
+        'category_id' => $category->id,
+        'amount' => 100,
+        'description' => 'Compra de cierre de mes',
+        'date' => '2026-11-30',
+    ]);
+
+    $this->actingAs($user)->get('/dashboard')
+        ->assertInertia(fn ($page) => $page
+            ->where('totals.expenses', fn ($value) => (float) $value === 100.0)
+        );
+});
+
+test('una parcialidad que corta el último día del mes sí cuenta', function () {
+    $this->travelTo('2026-11-30');
+
+    $user = User::factory()->create();
+    $category = makeCategory('expense');
+    // Corte el 31: en noviembre el corte cae el día 30.
+    $card = makeCard(['cut_off_day' => 31, 'payment_day' => 31, 'credit_limit' => 40000]);
+
+    Expense::create([
+        'category_id' => $category->id,
+        'card_id' => $card->id,
+        'amount' => 12000,
+        'description' => 'Televisor',
+        'date' => '2026-11-05',
+        'installment_count' => 12,
+    ])->syncInstallments();
+
+    $this->actingAs($user)->get('/dashboard')
+        ->assertInertia(fn ($page) => $page
+            ->where('totals.expenses', fn ($value) => (float) $value === 1000.0)
+        );
+});

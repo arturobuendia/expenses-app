@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CardStatement;
 use App\Models\Expense;
 use App\Models\User;
 
@@ -162,4 +163,32 @@ test('un cargo no puede salir de una bóveda y de una tarjeta a la vez', functio
 
     $response->assertSessionHasErrors('card_id');
     expect(Expense::count())->toBe(0);
+});
+
+test('dos cargos del mismo ciclo comparten un solo estado de cuenta', function () {
+    $user = User::factory()->create();
+    $category = makeCategory('expense');
+    $card = makeCard();
+
+    $this->actingAs($user)->post('/expenses', [
+        'category_id' => $category->id,
+        'card_id' => $card->id,
+        'amount' => 500,
+        'description' => 'Compra uno',
+        'date' => '2026-11-05',
+    ])->assertSessionHasNoErrors();
+
+    $this->actingAs($user)->post('/expenses', [
+        'category_id' => $category->id,
+        'card_id' => $card->id,
+        'amount' => 700,
+        'description' => 'Compra dos',
+        'date' => '2026-11-08',
+    ])->assertSessionHasNoErrors();
+
+    $statements = CardStatement::where('card_id', $card->id)->get();
+
+    expect($statements)->toHaveCount(1)
+        ->and(Expense::whereNotNull('card_statement_id')->count())->toBe(2)
+        ->and($statements[0]->totalAmount())->toBe(1200.0);
 });
