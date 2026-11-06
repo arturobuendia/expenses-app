@@ -27,16 +27,28 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 const { formatCurrency, formatDate } = useFormatter();
 
 defineProps<{
     loans: Loan[];
     totals: {
-        pending_amount: number;
-        pending_count: number;
-        recovered_amount: number;
-        recovered_count: number;
+        receivable_pending_amount: number;
+        receivable_pending_count: number;
+        payable_pending_amount: number;
+        payable_pending_count: number;
+        receivable_settled_amount: number;
+        receivable_settled_count: number;
+        payable_settled_amount: number;
+        payable_settled_count: number;
     };
 }>();
 
@@ -50,7 +62,8 @@ const isEditing = ref(false);
 const editingId = ref<number | null>(null);
 
 const form = useForm({
-    debtor_name: '',
+    counterparty_name: '',
+    direction: 'lent',
     amount: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
@@ -60,7 +73,8 @@ const openModal = (loan?: Loan) => {
     if (loan) {
         isEditing.value = true;
         editingId.value = loan.id;
-        form.debtor_name = loan.debtor_name;
+        form.counterparty_name = loan.counterparty_name;
+        form.direction = loan.direction;
         form.amount = loan.amount.toString();
         form.description = loan.description || '';
         form.date = loan.date;
@@ -68,6 +82,7 @@ const openModal = (loan?: Loan) => {
         isEditing.value = false;
         editingId.value = null;
         form.reset();
+        form.direction = 'lent';
         form.date = new Date().toISOString().split('T')[0];
     }
     isModalOpen.value = true;
@@ -117,7 +132,7 @@ const deleteLoan = (id: number) => {
                         Préstamos
                     </h1>
                     <p class="mt-1 text-zinc-400">
-                        Cuentas por cobrar y dinero prestado.
+                        Dinero que te deben y dinero que debes.
                     </p>
                 </div>
                 <Button @click="openModal()"> + Nuevo Préstamo </Button>
@@ -136,7 +151,13 @@ const deleteLoan = (id: number) => {
                         <p
                             class="font-mono text-3xl font-bold text-amber-400 tabular-nums"
                         >
-                            {{ formatCurrency(totals.pending_amount) }}
+                            {{
+                                formatCurrency(totals.receivable_pending_amount)
+                            }}
+                        </p>
+                        <p class="mt-1 text-xs text-zinc-500">
+                            {{ totals.receivable_pending_count }} préstamos
+                            activos
                         </p>
                     </CardContent>
                 </Card>
@@ -144,14 +165,17 @@ const deleteLoan = (id: number) => {
                 <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
                     <CardHeader class="pb-2">
                         <CardTitle class="text-sm font-medium text-zinc-400"
-                            >Préstamos Activos</CardTitle
+                            >Dinero por Pagar</CardTitle
                         >
                     </CardHeader>
                     <CardContent>
                         <p
-                            class="font-mono text-3xl font-bold text-zinc-100 tabular-nums"
+                            class="font-mono text-3xl font-bold text-red-400 tabular-nums"
                         >
-                            {{ totals.pending_count }}
+                            {{ formatCurrency(totals.payable_pending_amount) }}
+                        </p>
+                        <p class="mt-1 text-xs text-zinc-500">
+                            {{ totals.payable_pending_count }} deudas activas
                         </p>
                     </CardContent>
                 </Card>
@@ -159,14 +183,19 @@ const deleteLoan = (id: number) => {
                 <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
                     <CardHeader class="pb-2">
                         <CardTitle class="text-sm font-medium text-zinc-400"
-                            >Dinero Recuperado</CardTitle
+                            >Cobrado</CardTitle
                         >
                     </CardHeader>
                     <CardContent>
                         <p
                             class="font-mono text-3xl font-bold text-emerald-400/80 tabular-nums"
                         >
-                            {{ formatCurrency(totals.recovered_amount) }}
+                            {{
+                                formatCurrency(totals.receivable_settled_amount)
+                            }}
+                        </p>
+                        <p class="mt-1 text-xs text-zinc-500">
+                            {{ totals.receivable_settled_count }} liquidados
                         </p>
                     </CardContent>
                 </Card>
@@ -174,14 +203,17 @@ const deleteLoan = (id: number) => {
                 <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
                     <CardHeader class="pb-2">
                         <CardTitle class="text-sm font-medium text-zinc-400"
-                            >Deudas Saldadas</CardTitle
+                            >Pagado</CardTitle
                         >
                     </CardHeader>
                     <CardContent>
                         <p
                             class="font-mono text-3xl font-bold text-zinc-500 tabular-nums"
                         >
-                            {{ totals.recovered_count }}
+                            {{ formatCurrency(totals.payable_settled_amount) }}
+                        </p>
+                        <p class="mt-1 text-xs text-zinc-500">
+                            {{ totals.payable_settled_count }} liquidados
                         </p>
                     </CardContent>
                 </Card>
@@ -201,7 +233,7 @@ const deleteLoan = (id: number) => {
                                         >Fecha</TableHead
                                     >
                                     <TableHead class="font-medium text-zinc-400"
-                                        >Deudor</TableHead
+                                        >Persona</TableHead
                                     >
                                     <TableHead class="font-medium text-zinc-400"
                                         >Concepto</TableHead
@@ -235,15 +267,39 @@ const deleteLoan = (id: number) => {
                                     </TableCell>
                                     <TableCell
                                         class="font-medium text-zinc-200"
-                                        >{{ loan.debtor_name }}</TableCell
                                     >
+                                        <div class="flex flex-col gap-1">
+                                            <span>{{
+                                                loan.counterparty_name
+                                            }}</span>
+                                            <span
+                                                :class="[
+                                                    'w-fit rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset',
+                                                    loan.direction === 'lent'
+                                                        ? 'bg-amber-500/10 text-amber-400 ring-amber-500/20'
+                                                        : 'bg-red-500/10 text-red-400 ring-red-500/20',
+                                                ]"
+                                            >
+                                                {{
+                                                    loan.direction === 'lent'
+                                                        ? 'Te debe'
+                                                        : 'Le debes'
+                                                }}
+                                            </span>
+                                        </div>
+                                    </TableCell>
                                     <TableCell class="text-zinc-400"
                                         >{{
                                             loan.description || 'Sin concepto'
                                         }}
                                     </TableCell>
                                     <TableCell
-                                        class="text-right font-mono font-medium text-amber-400 tabular-nums"
+                                        :class="[
+                                            'text-right font-mono font-medium tabular-nums',
+                                            loan.direction === 'lent'
+                                                ? 'text-amber-400'
+                                                : 'text-red-400',
+                                        ]"
                                     >
                                         {{ formatCurrency(loan.amount) }}
                                     </TableCell>
@@ -252,11 +308,20 @@ const deleteLoan = (id: number) => {
                                             v-if="loan.is_paid"
                                             class="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20 ring-inset"
                                         >
-                                            Pagado
+                                            {{
+                                                loan.direction === 'lent'
+                                                    ? 'Cobrado'
+                                                    : 'Pagado'
+                                            }}
                                         </span>
                                         <span
                                             v-else
-                                            class="inline-flex items-center rounded-md bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-400 ring-1 ring-amber-500/20 ring-inset"
+                                            :class="[
+                                                'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset',
+                                                loan.direction === 'lent'
+                                                    ? 'bg-amber-500/10 text-amber-400 ring-amber-500/20'
+                                                    : 'bg-red-500/10 text-red-400 ring-red-500/20',
+                                            ]"
                                         >
                                             Pendiente
                                         </span>
@@ -298,8 +363,8 @@ const deleteLoan = (id: number) => {
                                         colspan="6"
                                         class="py-8 text-center text-zinc-500"
                                     >
-                                        No hay préstamos registrados. ¡Dile a la
-                                        IA por WhatsApp cuando prestes dinero!
+                                        No hay préstamos registrados. Registra
+                                        dinero que te deban o que tú debas.
                                     </TableCell>
                                 </TableRow>
                             </TableBody>
@@ -317,27 +382,77 @@ const deleteLoan = (id: number) => {
                             isEditing ? 'Editar Préstamo' : 'Nuevo Préstamo'
                         }}</DialogTitle>
                         <DialogDescription class="text-zinc-400">
-                            Registra manualmente un dinero que te deben.
+                            {{
+                                form.direction === 'lent'
+                                    ? 'Registra un dinero que te deben.'
+                                    : 'Registra un dinero que tú debes.'
+                            }}
                         </DialogDescription>
                     </DialogHeader>
 
                     <form @submit.prevent="submitForm" class="space-y-4 py-4">
+                        <div class="space-y-2">
+                            <Label class="text-zinc-400">Dirección</Label>
+                            <Select v-model="form.direction" required>
+                                <SelectTrigger
+                                    class="border-zinc-800 bg-zinc-900 text-zinc-100 focus:ring-zinc-500"
+                                >
+                                    <SelectValue
+                                        placeholder="Selecciona una dirección"
+                                    />
+                                </SelectTrigger>
+                                <SelectContent
+                                    class="border-zinc-800 bg-zinc-950 text-zinc-100"
+                                >
+                                    <SelectGroup>
+                                        <SelectItem
+                                            value="lent"
+                                            class="focus:bg-zinc-800 focus:text-zinc-100"
+                                        >
+                                            Me deben (yo presté)
+                                        </SelectItem>
+                                        <SelectItem
+                                            value="borrowed"
+                                            class="focus:bg-zinc-800 focus:text-zinc-100"
+                                        >
+                                            Debo (yo pedí prestado)
+                                        </SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            <span
+                                v-if="form.errors.direction"
+                                class="text-xs text-red-500"
+                                >{{ form.errors.direction }}</span
+                            >
+                        </div>
+
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-2">
-                                <Label for="debtor_name" class="text-zinc-400"
-                                    >¿A quién le prestaste?</Label
+                                <Label
+                                    for="counterparty_name"
+                                    class="text-zinc-400"
+                                    >{{
+                                        form.direction === 'lent'
+                                            ? '¿A quién le prestaste?'
+                                            : '¿A quién le debes?'
+                                    }}</Label
                                 >
                                 <Input
-                                    id="debtor_name"
-                                    v-model="form.debtor_name"
+                                    id="counterparty_name"
+                                    v-model="form.counterparty_name"
                                     required
                                     class="border-zinc-800 bg-zinc-900 text-zinc-100 focus-visible:ring-zinc-500"
-                                    placeholder="Ej. Juan Pérez"
+                                    :placeholder="
+                                        form.direction === 'lent'
+                                            ? 'Ej. Juan Pérez'
+                                            : 'Ej. Banco o Sofía'
+                                    "
                                 />
                                 <span
-                                    v-if="form.errors.debtor_name"
+                                    v-if="form.errors.counterparty_name"
                                     class="text-xs text-red-500"
-                                    >{{ form.errors.debtor_name }}</span
+                                    >{{ form.errors.counterparty_name }}</span
                                 >
                             </div>
                             <div class="space-y-2">

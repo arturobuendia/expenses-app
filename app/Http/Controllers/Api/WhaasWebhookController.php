@@ -37,7 +37,7 @@ class WhaasWebhookController extends Controller
             $monto = number_format($record->amount, 2);
             
             if ($parsedData['type'] === 'loan') {
-                $respuesta = "✅ Anotado: Le prestaste $\n{$monto} a {$record->debtor_name}. ({$record->description})";
+                $respuesta = "✅ Anotado: Le prestaste $\n{$monto} a {$record->counterparty_name}. ({$record->description})";
             } else {
                 $tipo = $parsedData['type'] === 'expense' ? 'Gasto' : 'Ingreso';
                 $respuesta = "✅ {$tipo} de $\n{$monto} registrado. ({$record->description})";

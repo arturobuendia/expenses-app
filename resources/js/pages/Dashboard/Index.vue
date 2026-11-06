@@ -23,6 +23,7 @@ interface DashboardTotals {
     capital: number;
     monthly_yield: number;
     pending_loans: number;
+    pending_debts: number;
 }
 
 const { formatCurrency, formatDate, getMonthName } = useFormatter();
@@ -208,6 +209,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                             >
                                 {{ formatCurrency(totals.pending_loans) }} en la
                                 calle
+                            </span>
+                            <span
+                                v-if="totals.pending_debts > 0"
+                                class="font-mono font-medium text-red-400/80 tabular-nums"
+                                title="Deudas por pagar"
+                            >
+                                -{{ formatCurrency(totals.pending_debts) }} por
+                                pagar
                             </span>
                         </div>
                     </CardContent>

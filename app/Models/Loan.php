@@ -6,8 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Loan extends Model
 {
+    /**
+     * `direction` indica quién debe: `lent` cuando el usuario prestó,
+     * `borrowed` cuando el usuario pidió prestado.
+     */
     protected $fillable = [
-        'debtor_name',
+        'counterparty_name',
+        'direction',
         'amount',
         'description',
         'date',

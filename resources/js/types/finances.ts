@@ -115,7 +115,10 @@ export interface Income {
 
 export interface Loan {
     id: number;
-    debtor_name: string;
+    /** Persona de la contraparte: deudor si es `lent`, acreedor si es `borrowed`. */
+    counterparty_name: string;
+    /** `lent` = te deben, `borrowed` = tú debes. */
+    direction: 'lent' | 'borrowed';
     amount: number | string;
     description: string | null;
     date: string;

@@ -60,8 +60,14 @@ class DashboardController extends Controller
         $totalCapital = $vaults->sum('balance');
         $monthlyYield = $vaults->sum(fn (Vault $vault) => $vault->monthlyYield());
 
-        // 3. Dinero en la calle (Préstamos pendientes)
-        $pendingLoansAmount = Loan::where('is_paid', false)->sum('amount');
+        // 3. Dinero en la calle (lo que te deben) vs. deudas pendientes (lo que debes)
+        $pendingLoansAmount = Loan::where('direction', 'lent')
+            ->where('is_paid', false)
+            ->sum('amount');
+
+        $pendingDebtsAmount = Loan::where('direction', 'borrowed')
+            ->where('is_paid', false)
+            ->sum('amount');
 
         // 4. Próximos gastos fijos (Suscripciones)
         $upcomingSubscriptions = Subscription::where('is_active', true)
@@ -86,6 +92,7 @@ class DashboardController extends Controller
                 'capital' => (float) $totalCapital,
                 'monthly_yield' => (float) $monthlyYield,
                 'pending_loans' => (float) $pendingLoansAmount,
+                'pending_debts' => (float) $pendingDebtsAmount,
             ],
             'vaults' => $vaults,
             'upcomingSubscriptions' => $upcomingSubscriptions,
