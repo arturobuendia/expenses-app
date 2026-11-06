@@ -192,3 +192,42 @@ test('dos cargos del mismo ciclo comparten un solo estado de cuenta', function (
         ->and(Expense::whereNotNull('card_statement_id')->count())->toBe(2)
         ->and($statements[0]->totalAmount())->toBe(1200.0);
 });
+
+test('la página de estados de cuenta muestra los cargos y parcialidades del corte', function () {
+    $this->travelTo('2026-11-20');
+
+    $user = User::factory()->create();
+    $category = makeCategory('expense');
+    $card = makeCard();
+
+    $this->actingAs($user)->post('/expenses', [
+        'category_id' => $category->id,
+        'card_id' => $card->id,
+        'amount' => 500,
+        'description' => 'Cena',
+        'date' => '2026-11-05',
+    ])->assertSessionHasNoErrors();
+
+    $this->actingAs($user)->post('/expenses', [
+        'category_id' => $category->id,
+        'card_id' => $card->id,
+        'amount' => 12000,
+        'description' => 'Televisor',
+        'date' => '2026-11-05',
+        'installment_count' => 12,
+    ])->assertSessionHasNoErrors();
+
+    $this->actingAs($user)->get('/cards/'.$card->id)
+        ->assertInertia(fn ($page) => $page
+            ->component('Cards/Show')
+            ->where('card.name', 'BBVA Azul')
+            ->where('statements', function ($statements) {
+                $statement = collect($statements)->first();
+
+                return is_array($statement)
+                    && count($statement['charges']) === 1
+                    && count($statement['installments']) === 1
+                    && (float) $statement['total'] === 1500.0;
+            })
+        );
+});

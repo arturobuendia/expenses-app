@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { Head, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import CurrencyInput from '@/components/CurrencyInput.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -279,7 +279,12 @@ const nextPending = (card: Card) =>
                                     <TableCell
                                         class="font-medium text-zinc-200"
                                     >
-                                        {{ card.name }}
+                                        <Link
+                                            :href="`/cards/${card.id}`"
+                                            class="text-zinc-200 underline-offset-4 hover:text-violet-300 hover:underline"
+                                        >
+                                            {{ card.name }}
+                                        </Link>
                                         <span
                                             v-if="!card.is_active"
                                             class="ml-2 text-xs text-zinc-500"
