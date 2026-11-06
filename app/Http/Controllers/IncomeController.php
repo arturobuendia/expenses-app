@@ -64,6 +64,7 @@ class IncomeController extends Controller
             'vaults' => $vaults,
             'totals' => $totals,
             'filters' => $request->only(['search', 'category_id', 'date_filter']),
+            'open_create' => $request->boolean('new'),
         ]);
     }
 

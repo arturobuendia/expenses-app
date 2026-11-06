@@ -76,6 +76,7 @@ class ExpenseController extends Controller
             'cards' => $cards,
             'totals' => $totals,
             'filters' => $request->only(['search', 'category_id', 'date_filter']), // Regresamos el estado
+            'open_create' => $request->boolean('new'),
         ]);
     }
 
