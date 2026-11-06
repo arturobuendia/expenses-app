@@ -11,7 +11,7 @@
             }
         </style>
 
-        <title inertia>{{ config('app.name', 'Expenses App') }}</title>
+        <title inertia>{{ config('app.name', 'XPS App') }}</title>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
