@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue';
-import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 defineOptions({ inheritAttrs: false });
 
 const props = defineProps<{
     modelValue?: string | number | null;
+    class?: string;
 }>();
 
 const emit = defineEmits<{
     (e: 'update:modelValue', value: string): void;
 }>();
 
-const inputRef = ref<InstanceType<typeof Input> | null>(null);
+const inputRef = ref<HTMLInputElement | null>(null);
 
 /** Conserva solo dígitos y un punto decimal, con un máximo de dos decimales. */
 const normalize = (value: string | number | null | undefined): string => {
@@ -66,35 +67,48 @@ const restoreCaret = (input: HTMLInputElement, digits: number) => {
     input.setSelectionRange(position, position);
 };
 
-const onInput = (event: Event) => {
-    const input = event.target as HTMLInputElement;
+const onInput = () => {
+    const input = inputRef.value;
+
+    if (!input) return;
+
     const caret = input.selectionStart ?? input.value.length;
     const digitsBeforeCaret = (input.value.slice(0, caret).match(/\d/g) ?? [])
         .length;
 
     const normalized = normalize(input.value);
+    const formatted = format(normalized);
 
-    text.value = format(normalized);
+    // Se reescribe el DOM directamente para que los caracteres inválidos
+    // desaparezcan aunque el valor normalizado no haya cambiado.
+    input.value = formatted;
+    text.value = formatted;
     emit('update:modelValue', normalized);
 
     nextTick(() => {
-        const element = inputRef.value?.$el as HTMLInputElement | undefined;
-
-        if (element) {
-            restoreCaret(element, digitsBeforeCaret);
+        if (inputRef.value) {
+            restoreCaret(inputRef.value, digitsBeforeCaret);
         }
     });
 };
 </script>
 
 <template>
-    <Input
+    <input
         ref="inputRef"
         v-bind="$attrs"
-        :model-value="text"
+        :value="text"
         type="text"
         inputmode="decimal"
         autocomplete="off"
+        :class="
+            cn(
+                'h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30',
+                'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
+                props.class,
+            )
+        "
         @input="onInput"
     />
 </template>
