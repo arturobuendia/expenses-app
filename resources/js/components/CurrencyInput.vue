@@ -53,7 +53,11 @@ watch(
 );
 
 /** Deja el cursor después del mismo número de dígitos que había antes de formatear. */
-const restoreCaret = (input: HTMLInputElement, digits: number) => {
+const restoreCaret = (
+    input: HTMLInputElement,
+    digits: number,
+    afterDecimal: boolean,
+) => {
     let seen = 0;
     let position = 0;
 
@@ -62,6 +66,14 @@ const restoreCaret = (input: HTMLInputElement, digits: number) => {
 
         seen += /\d/.test(char) ? 1 : 0;
         position += char.length;
+    }
+
+    // Si el cursor estaba después del punto decimal, hay que saltarlo para no
+    // dejarlo antes del punto que el usuario acaba de escribir.
+    if (afterDecimal) {
+        const dot = input.value.indexOf('.', position);
+
+        if (dot !== -1) position = dot + 1;
     }
 
     input.setSelectionRange(position, position);
@@ -73,8 +85,9 @@ const onInput = () => {
     if (!input) return;
 
     const caret = input.selectionStart ?? input.value.length;
-    const digitsBeforeCaret = (input.value.slice(0, caret).match(/\d/g) ?? [])
-        .length;
+    const beforeCaret = input.value.slice(0, caret);
+    const digitsBeforeCaret = (beforeCaret.match(/\d/g) ?? []).length;
+    const afterDecimal = beforeCaret.includes('.');
 
     const normalized = normalize(input.value);
     const formatted = format(normalized);
@@ -87,7 +100,7 @@ const onInput = () => {
 
     nextTick(() => {
         if (inputRef.value) {
-            restoreCaret(inputRef.value, digitsBeforeCaret);
+            restoreCaret(inputRef.value, digitsBeforeCaret, afterDecimal);
         }
     });
 };
