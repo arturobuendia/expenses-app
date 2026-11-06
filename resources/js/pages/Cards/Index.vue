@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import CurrencyInput from '@/components/CurrencyInput.vue';
@@ -63,7 +63,37 @@ const form = useForm({
     is_active: true,
 });
 
+const isHydratingForm = ref(false);
+
+// Payment is due 20 days after the cut. Day-of-month values cannot exceed 31,
+// so a 31-day month is used as the reference and the overflow wraps around.
+const autoFillPaymentDay = (cutOffDay: number) => {
+    const day = cutOffDay + 20;
+
+    return day > 31 ? day - 31 : day;
+};
+
+watch(
+    () => form.cut_off_day,
+    (value) => {
+        if (isHydratingForm.value) {
+            return;
+        }
+
+        const cutOffDay = Number(value);
+
+        if (!Number.isInteger(cutOffDay) || cutOffDay < 1 || cutOffDay > 31) {
+            return;
+        }
+
+        form.payment_day = autoFillPaymentDay(cutOffDay).toString();
+    },
+    { flush: 'sync' },
+);
+
 const openModal = (card?: Card) => {
+    isHydratingForm.value = true;
+
     if (card) {
         isEditing.value = true;
         editingId.value = card.id;
@@ -78,6 +108,8 @@ const openModal = (card?: Card) => {
         form.reset();
         form.is_active = true;
     }
+
+    isHydratingForm.value = false;
     isModalOpen.value = true;
 };
 
@@ -465,6 +497,10 @@ const nextPending = (card: Card) =>
                                     class="text-xs text-red-500"
                                     >{{ form.errors.payment_day }}</span
                                 >
+                                <p class="text-xs text-zinc-500">
+                                    Se calcula 20 días después del corte. Puedes
+                                    ajustarlo.
+                                </p>
                             </div>
                         </div>
 
