@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import CurrencyInput from '@/components/CurrencyInput.vue';
 import type { BreadcrumbItem } from '@/types';
 import type { Card } from '@/types/finances';
 import { useFormatter } from '@/composables/useFormatter';
@@ -410,15 +411,12 @@ const nextPending = (card: Card) =>
                             <Label for="credit_limit" class="text-zinc-400"
                                 >Límite de crédito</Label
                             >
-                            <Input
+                            <CurrencyInput
                                 id="credit_limit"
                                 v-model="form.credit_limit"
-                                type="number"
-                                step="0.01"
-                                min="0"
                                 required
                                 class="border-zinc-800 bg-zinc-900 font-medium text-zinc-100 focus-visible:ring-zinc-500"
-                                placeholder="0.00"
+                                placeholder="$0.00"
                             />
                             <span
                                 v-if="form.errors.credit_limit"

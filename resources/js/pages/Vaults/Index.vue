@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import CurrencyInput from '@/components/CurrencyInput.vue';
 import type { BreadcrumbItem } from '@/types';
 import type { Vault } from '@/types/finances'; // Asegúrate de agregar daily_yield y monthly_yield a la interfaz en tu archivo de tipos
 import { useFormatter } from '@/composables/useFormatter';
@@ -359,15 +360,12 @@ const deleteVault = (id: number) => {
                             <Label for="initial_balance" class="text-zinc-400"
                                 >Saldo Inicial</Label
                             >
-                            <Input
+                            <CurrencyInput
                                 id="initial_balance"
                                 v-model="form.initial_balance"
-                                type="number"
-                                step="0.01"
-                                min="0"
                                 required
                                 class="border-zinc-800 bg-zinc-900 font-medium text-zinc-100 focus-visible:ring-zinc-500"
-                                placeholder="0.00"
+                                placeholder="$0.00"
                             />
                             <p class="text-xs text-zinc-500">
                                 Punto de partida. El saldo actual se calcula
@@ -416,14 +414,11 @@ const deleteVault = (id: number) => {
                                         >(Opcional)</span
                                     ></Label
                                 >
-                                <Input
+                                <CurrencyInput
                                     id="yield_cap"
                                     v-model="form.yield_cap"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
                                     class="border-zinc-800 bg-zinc-900 text-zinc-100 focus-visible:ring-zinc-500"
-                                    placeholder="Ej. 10000.00"
+                                    placeholder="Ej. $10,000.00"
                                 />
                                 <span
                                     v-if="form.errors.yield_cap"

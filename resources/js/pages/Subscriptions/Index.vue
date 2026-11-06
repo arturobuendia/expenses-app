@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import CurrencyInput from '@/components/CurrencyInput.vue';
 import type { BreadcrumbItem } from '@/types';
 import type { Subscription, Category } from '@/types/finances';
 import { useFormatter } from '@/composables/useFormatter';
@@ -374,15 +375,12 @@ const deleteSubscription = (id: number) => {
                                 <Label for="amount" class="text-zinc-400"
                                     >Costo</Label
                                 >
-                                <Input
+                                <CurrencyInput
                                     id="amount"
                                     v-model="form.amount"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
                                     required
                                     class="border-zinc-800 bg-zinc-900 text-zinc-100 focus-visible:ring-zinc-500"
-                                    placeholder="0.00"
+                                    placeholder="$0.00"
                                 />
                                 <span
                                     v-if="form.errors.amount"
