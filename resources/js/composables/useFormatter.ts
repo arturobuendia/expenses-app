@@ -12,17 +12,19 @@ export function useFormatter() {
     const formatDate = (dateString: string): string => {
         if (!dateString) return '';
 
-        const date = new Date(dateString);
+        // Las fechas del backend son de solo día (Y-m-d). Tomamos únicamente
+        // esa parte y la interpretamos en UTC para evitar desfases de zona.
+        const [year, month, day] = dateString
+            .slice(0, 10)
+            .split('-')
+            .map(Number);
 
         return new Intl.DateTimeFormat('es-MX', {
             day: '2-digit',
             month: 'short',
             year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-            timeZone: 'America/Mexico_City',
-        }).format(date);
+            timeZone: 'UTC',
+        }).format(new Date(Date.UTC(year, month - 1, day)));
     };
 
     const getMonthName = (dateInput?: string | Date): string => {
