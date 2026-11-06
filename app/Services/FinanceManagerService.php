@@ -15,7 +15,9 @@ class FinanceManagerService
 
         if ($data['type'] === 'loan') {
             return Loan::create([
-                'debtor_name' => $data['debtor_name'],
+                'counterparty_name' => $data['counterparty_name'],
+                // El webhook solo reporta dinero que el usuario prestó.
+                'direction' => 'lent',
                 'amount' => $data['amount'],
                 'description' => $data['description'] ?? 'Préstamo',
                 'date' => $data['date'],

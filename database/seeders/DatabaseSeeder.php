@@ -187,7 +187,8 @@ class DatabaseSeeder extends Seeder
 
         // 6. Crear Préstamos de prueba
         Loan::create([
-            'debtor_name' => 'Luis',
+            'counterparty_name' => 'Luis',
+            'direction' => 'lent',
             'amount' => 500.00,
             'description' => 'Para la gasolina',
             'date' => $now->copy()->subDays(2),
@@ -195,7 +196,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Loan::create([
-            'debtor_name' => 'Carlos',
+            'counterparty_name' => 'Carlos',
+            'direction' => 'lent',
             'amount' => 1500.00,
             'description' => 'Completar renta',
             'date' => $now->copy()->subDays(15),
@@ -203,10 +205,20 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Loan::create([
-            'debtor_name' => 'Ximena',
+            'counterparty_name' => 'Ximena',
+            'direction' => 'lent',
             'amount' => 800.00,
             'description' => 'Flores proveedor',
             'date' => $now->copy()->subDays(5),
+            'is_paid' => false,
+        ]);
+
+        Loan::create([
+            'counterparty_name' => 'Sofía',
+            'direction' => 'borrowed',
+            'amount' => 2000.00,
+            'description' => 'Préstamo para la boda',
+            'date' => $now->copy()->subDays(24),
             'is_paid' => false,
         ]);
     }

@@ -19,7 +19,7 @@ Reglas ESTRICTAS:
 1. Tipos permitidos: "expense" (gastos), "income" (ingresos), o "loan" (cuando el usuario presta dinero a alguien).
 2. Si es "expense" o "income", usa un "category_id" de la siguiente lista exacta:
 {$categoriesContext}
-3. Si es un "loan" (préstamo a alguien), el "category_id" debe ser null, pero DEBES llenar el campo "debtor_name" con el nombre de la persona a la que se le prestó.
+3. Si es un "loan" (préstamo a alguien), el "category_id" debe ser null, pero DEBES llenar el campo "counterparty_name" con el nombre de la persona a la que se le prestó.
 4. Responde ÚNICAMENTE con un objeto JSON válido.
 
 Formato JSON requerido:
@@ -28,7 +28,7 @@ Formato JSON requerido:
     "category_id": integer o null,
     "amount": float,
     "description": "string breve del concepto",
-    "debtor_name": "string o null"
+    "counterparty_name": "string o null"
 }
 
 Mensaje del usuario: "{$message}"
