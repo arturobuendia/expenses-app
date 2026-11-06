@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
     Table,
@@ -61,6 +61,65 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <p class="mt-1 text-zinc-400">
                         Tu patrimonio, rentabilidades y flujo mensual.
                     </p>
+                </div>
+
+                <!-- Acciones rápidas: móvil en grande, escritorio compactas en el header -->
+                <div
+                    class="grid w-full grid-cols-2 gap-3 md:flex md:w-auto md:items-center"
+                >
+                    <Link
+                        href="/incomes?new=1"
+                        class="flex min-h-30 flex-col items-center justify-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-6 text-center transition-colors hover:bg-emerald-500/15 active:bg-emerald-500/20 md:min-h-0 md:flex-row md:gap-2 md:rounded-xl md:px-4 md:py-2.5"
+                        aria-label="Reportar ingreso"
+                    >
+                        <svg
+                            class="h-8 w-8 text-emerald-400 md:h-4 md:w-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.5"
+                            stroke="currentColor"
+                            aria-hidden="true"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M12 4.5v15m0 0l-6-6m6 6l6-6"
+                            />
+                        </svg>
+                        <span
+                            class="text-base font-semibold text-emerald-400 md:text-sm"
+                        >
+                            Reportar ingreso
+                        </span>
+                    </Link>
+
+                    <Link
+                        href="/expenses?new=1"
+                        class="flex min-h-30 flex-col items-center justify-center gap-2 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-6 text-center transition-colors hover:bg-red-500/15 active:bg-red-500/20 md:min-h-0 md:flex-row md:gap-2 md:rounded-xl md:px-4 md:py-2.5"
+                        aria-label="Reportar gasto"
+                    >
+                        <svg
+                            class="h-8 w-8 text-red-400 md:h-4 md:w-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.5"
+                            stroke="currentColor"
+                            aria-hidden="true"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M12 19.5v-15m0 0l-6 6m6-6l6 6"
+                            />
+                        </svg>
+                        <span
+                            class="text-base font-semibold text-red-400 md:text-sm"
+                        >
+                            Reportar gasto
+                        </span>
+                    </Link>
                 </div>
             </header>
 

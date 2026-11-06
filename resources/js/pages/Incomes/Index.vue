@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import CurrencyInput from '@/components/CurrencyInput.vue';
@@ -56,6 +56,7 @@ const props = defineProps<{
         category_id?: string;
         date_filter?: string;
     };
+    open_create?: boolean;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -130,6 +131,13 @@ const closeModal = () => {
         form.clearErrors();
     }, 200);
 };
+
+// Atajo desde el dashboard: /incomes?new=1 abre el formulario de inmediato.
+onMounted(() => {
+    if (props.open_create) {
+        openModal();
+    }
+});
 
 const submitForm = () => {
     if (isEditing.value && editingId.value) {
