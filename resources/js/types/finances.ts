@@ -39,9 +39,28 @@ export interface CardStatement {
     cut_date: string;
     due_date: string;
     total_charges?: number | string | null;
+    total?: number;
     paid_amount?: number;
     pending_amount?: number;
     is_settled?: boolean;
+    charges?: Array<{
+        id: number;
+        description: string;
+        amount: number | string;
+        date: string;
+        category?: Category | null;
+    }>;
+    installments?: Array<{
+        id: number;
+        number: number;
+        amount: number | string;
+        cut_date: string;
+        expense?: {
+            id: number;
+            description: string;
+            installment_count: number;
+        } | null;
+    }>;
 }
 
 export interface Card {

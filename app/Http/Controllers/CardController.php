@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Card;
+use App\Models\CardStatement;
+use App\Models\Expense;
+use App\Models\Installment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -44,6 +47,43 @@ class CardController extends Controller
         return Inertia::render('Cards/Index', [
             'cards' => $cards,
             'totals' => $totals,
+        ]);
+    }
+
+    public function show(Card $card)
+    {
+        $card->withComputedTotals();
+
+        $statements = $card->settledStatements();
+
+        // Cargos (compras normales) agrupados por su estado de cuenta.
+        $charges = Expense::with('category')
+            ->whereIn('card_statement_id', $statements->pluck('id'))
+            ->where('is_transfer', false)
+            ->orderBy('date')
+            ->get()
+            ->groupBy('card_statement_id');
+
+        // Parcialidades MSI agrupadas por fecha de corte.
+        $installments = Installment::with('expense')
+            ->where('card_id', $card->id)
+            ->get()
+            ->groupBy(fn (Installment $installment) => $installment->cut_date->toDateString());
+
+        $statements = $statements
+            ->map(function (CardStatement $statement) use ($charges, $installments) {
+                $statement->total = round((float) $statement->paid_amount + (float) $statement->pending_amount, 2);
+                $statement->setRelation('charges', $charges->get($statement->id, collect()));
+                $statement->setRelation('installments', $installments->get($statement->cut_date->toDateString(), collect()));
+
+                return $statement;
+            })
+            ->reverse()
+            ->values();
+
+        return Inertia::render('Cards/Show', [
+            'card' => $card,
+            'statements' => $statements,
         ]);
     }
 
