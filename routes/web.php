@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BatchExpenseController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
@@ -23,6 +24,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
     Route::put('/expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
     Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
+
+    // Acciones por lote
+    Route::get('/batch-expenses', [BatchExpenseController::class, 'index'])->name('batch-expenses.index');
+    Route::post('/batch-expenses/preview', [BatchExpenseController::class, 'preview'])->name('batch-expenses.preview');
+    Route::post('/batch-expenses', [BatchExpenseController::class, 'store'])->name('batch-expenses.store');
 
     // Ingresos
     Route::get('/incomes', [IncomeController::class, 'index'])->name('incomes.index');
