@@ -37,7 +37,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 
-const { formatCurrency, formatDate } = useFormatter();
+const { formatCurrency, formatDate, toDateInput } = useFormatter();
 
 const props = defineProps<{
     expenses: {
@@ -124,7 +124,7 @@ const openModal = (expense?: Expense) => {
         form.card_id = expense.card_id ? expense.card_id.toString() : 'none';
         form.amount = expense.amount.toString();
         form.description = expense.description;
-        form.date = expense.date;
+        form.date = toDateInput(expense.date);
         form.is_transfer = expense.is_transfer;
         form.installment_count = expense.installment_count.toString();
     } else {

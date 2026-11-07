@@ -36,7 +36,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 
-const { formatCurrency, formatDate } = useFormatter();
+const { formatCurrency, formatDate, toDateInput } = useFormatter();
 
 const props = defineProps<{
     incomes: {
@@ -114,7 +114,7 @@ const openModal = (income?: Income) => {
         form.vault_id = income.vault_id ? income.vault_id.toString() : '';
         form.amount = income.amount.toString();
         form.description = income.description;
-        form.date = income.date;
+        form.date = toDateInput(income.date);
     } else {
         isEditing.value = false;
         editingId.value = null;
