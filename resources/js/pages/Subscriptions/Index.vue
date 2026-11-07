@@ -36,7 +36,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 
-const { formatCurrency, formatDate } = useFormatter();
+const { formatCurrency, formatDate, toDateInput } = useFormatter();
 
 defineProps<{
     subscriptions: Subscription[];
@@ -77,7 +77,7 @@ const openModal = (sub?: Subscription) => {
         form.amount = sub.amount.toString();
         form.category_id = sub.category_id ? sub.category_id.toString() : '';
         form.card_id = sub.card_id ? sub.card_id.toString() : 'none';
-        form.next_billing_date = sub.next_billing_date;
+        form.next_billing_date = toDateInput(sub.next_billing_date);
         form.frequency = sub.frequency;
         form.is_active = sub.is_active ? '1' : '0';
     } else {

@@ -27,6 +27,19 @@ export function useFormatter() {
         }).format(new Date(Date.UTC(year, month - 1, day)));
     };
 
+    /**
+     * Convierte una fecha del backend al valor que acepta un <input type="date">.
+     *
+     * El backend serializa las columnas `date` como ISO 8601
+     * (ej. "2026-10-08T00:00:00.000000Z"); el input de fecha solo muestra un
+     * valor cuando recibe exactamente "YYYY-MM-DD", así que recortamos la parte
+     * del día.
+     */
+    const toDateInput = (dateString: string): string => {
+        if (!dateString) return '';
+        return dateString.slice(0, 10);
+    };
+
     const getMonthName = (dateInput?: string | Date): string => {
         // Si no le pasamos fecha, usa la actual
         const date = dateInput ? new Date(dateInput) : new Date();
@@ -43,6 +56,7 @@ export function useFormatter() {
     return {
         formatCurrency,
         formatDate,
+        toDateInput,
         getMonthName,
     };
 }

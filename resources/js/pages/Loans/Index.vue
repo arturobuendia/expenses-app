@@ -36,7 +36,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 
-const { formatCurrency, formatDate } = useFormatter();
+const { formatCurrency, formatDate, toDateInput } = useFormatter();
 
 defineProps<{
     loans: Loan[];
@@ -77,7 +77,7 @@ const openModal = (loan?: Loan) => {
         form.direction = loan.direction;
         form.amount = loan.amount.toString();
         form.description = loan.description || '';
-        form.date = loan.date;
+        form.date = toDateInput(loan.date);
     } else {
         isEditing.value = false;
         editingId.value = null;
