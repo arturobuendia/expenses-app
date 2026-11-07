@@ -50,7 +50,7 @@ class BatchExpenseController extends Controller
             }
         });
 
-        return redirect()->back()->with('success', "{$count} cargos registrados correctamente.");
+        return redirect()->route('batch-expenses.index')->with('success', "{$count} cargos registrados correctamente.");
     }
 
     /**
