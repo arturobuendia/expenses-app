@@ -39,6 +39,10 @@ class ExpenseController extends Controller
             $query->whereMonth('date', $lastMonth->month)->whereYear('date', $lastMonth->year);
         } elseif ($dateFilter === 'this_year') {
             $query->whereYear('date', $now->year);
+        } elseif (preg_match('/^\d{4}-\d{2}$/', $dateFilter)) {
+            // Mes específico en formato "YYYY-MM" (ej. "2026-03" para marzo)
+            [$year, $month] = array_map('intval', explode('-', $dateFilter));
+            $query->whereYear('date', $year)->whereMonth('date', $month);
         }
         // Si es 'all_time', no aplicamos where de fecha
 
@@ -69,12 +73,18 @@ class ExpenseController extends Controller
         $vaults = Vault::orderBy('name')->get(['id', 'name']);
         $cards = Card::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
+        // Años con datos (más el actual) para poblar el submenú de mes específico.
+        $earliestDate = Expense::min('date');
+        $earliestYear = $earliestDate ? Carbon::parse($earliestDate)->year : $now->year;
+        $availableYears = range($now->year, $earliestYear);
+
         return Inertia::render('Expenses/Index', [
             'expenses' => $expenses,
             'categories' => $categories,
             'vaults' => $vaults,
             'cards' => $cards,
             'totals' => $totals,
+            'available_years' => $availableYears,
             'filters' => $request->only(['search', 'category_id', 'date_filter']), // Regresamos el estado
             'open_create' => $request->boolean('new'),
         ]);

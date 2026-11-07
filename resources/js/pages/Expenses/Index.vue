@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
+import { ChevronDown } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import CurrencyInput from '@/components/CurrencyInput.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -36,6 +37,17 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const { formatCurrency, formatDate, toDateInput } = useFormatter();
 
@@ -60,6 +72,7 @@ const props = defineProps<{
         category_id?: string;
         date_filter?: string;
     };
+    available_years: number[];
     open_create?: boolean;
 }>();
 
@@ -73,6 +86,47 @@ const activeFilters = ref({
     category_id: props.filters?.category_id || 'all',
     date_filter: props.filters?.date_filter || 'this_month',
 });
+
+// Meses en español para el submenú de "Mes específico" y la etiqueta del botón.
+const MONTHS = [
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
+];
+
+const monthLabel = (year: number, month: number): string =>
+    `${MONTHS[month - 1]} ${year}`;
+
+const dateFilterLabel = computed(() => {
+    const value = activeFilters.value.date_filter;
+
+    if (/^\d{4}-\d{2}$/.test(value)) {
+        const [year, month] = value.split('-').map(Number);
+        return monthLabel(year, month);
+    }
+
+    const labels: Record<string, string> = {
+        this_month: 'Este mes',
+        last_month: 'Mes pasado',
+        this_year: 'Este año',
+        all_time: 'Todo el tiempo',
+    };
+
+    return labels[value] ?? 'Periodo';
+});
+
+const selectDateFilter = (value: string) => {
+    activeFilters.value.date_filter = value;
+};
 
 let timeoutId: ReturnType<typeof setTimeout>;
 
@@ -291,39 +345,80 @@ const deleteExpense = (id: number) => {
                     </SelectContent>
                 </Select>
 
-                <Select v-model="activeFilters.date_filter">
-                    <SelectTrigger
-                        class="w-full border-zinc-800 bg-zinc-950 text-zinc-200 focus:ring-zinc-500 md:w-50"
-                    >
-                        <SelectValue placeholder="Periodo" />
-                    </SelectTrigger>
-                    <SelectContent
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <Button
+                            variant="outline"
+                            class="w-full justify-between border-zinc-800 bg-zinc-950 px-3 text-zinc-200 hover:bg-zinc-800 hover:text-white md:w-50"
+                        >
+                            {{ dateFilterLabel }}
+                            <ChevronDown class="ml-2 size-4 opacity-50" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
                         class="border-zinc-800 bg-zinc-950 text-zinc-100"
                     >
-                        <SelectGroup>
-                            <SelectItem
-                                value="this_month"
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem
                                 class="focus:bg-zinc-800 focus:text-zinc-100"
-                                >Este mes
-                            </SelectItem>
-                            <SelectItem
-                                value="last_month"
+                                @select="selectDateFilter('this_month')"
+                                >Este mes</DropdownMenuItem
+                            >
+                            <DropdownMenuItem
                                 class="focus:bg-zinc-800 focus:text-zinc-100"
-                                >Mes pasado
-                            </SelectItem>
-                            <SelectItem
-                                value="this_year"
+                                @select="selectDateFilter('last_month')"
+                                >Mes pasado</DropdownMenuItem
+                            >
+                            <DropdownMenuItem
                                 class="focus:bg-zinc-800 focus:text-zinc-100"
-                                >Este año
-                            </SelectItem>
-                            <SelectItem
-                                value="all_time"
+                                @select="selectDateFilter('this_year')"
+                                >Este año</DropdownMenuItem
+                            >
+                            <DropdownMenuItem
                                 class="focus:bg-zinc-800 focus:text-zinc-100"
-                                >Todo el tiempo
-                            </SelectItem>
-                        </SelectGroup>
-                    </SelectContent>
-                </Select>
+                                @select="selectDateFilter('all_time')"
+                                >Todo el tiempo</DropdownMenuItem
+                            >
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuSub>
+                            <DropdownMenuSubTrigger
+                                class="focus:bg-zinc-800 focus:text-zinc-100 data-[state=open]:bg-zinc-800 data-[state=open]:text-zinc-100"
+                                >Mes específico</DropdownMenuSubTrigger
+                            >
+                            <DropdownMenuSubContent
+                                class="border-zinc-800 bg-zinc-950 text-zinc-100"
+                            >
+                                <DropdownMenuSub
+                                    v-for="year in available_years"
+                                    :key="year"
+                                >
+                                    <DropdownMenuSubTrigger
+                                        class="focus:bg-zinc-800 focus:text-zinc-100 data-[state=open]:bg-zinc-800 data-[state=open]:text-zinc-100"
+                                        >{{ year }}</DropdownMenuSubTrigger
+                                    >
+                                    <DropdownMenuSubContent
+                                        class="border-zinc-800 bg-zinc-950 text-zinc-100"
+                                    >
+                                        <DropdownMenuItem
+                                            v-for="(name, index) in MONTHS"
+                                            :key="index"
+                                            class="focus:bg-zinc-800 focus:text-zinc-100"
+                                            @select="
+                                                selectDateFilter(
+                                                    `${year}-${String(
+                                                        index + 1,
+                                                    ).padStart(2, '0')}`,
+                                                )
+                                            "
+                                            >{{ name }}</DropdownMenuItem
+                                        >
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                            </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
             <div
