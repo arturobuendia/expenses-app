@@ -36,6 +36,10 @@ class IncomeController extends Controller
             $query->whereMonth('date', $lastMonth->month)->whereYear('date', $lastMonth->year);
         } elseif ($dateFilter === 'this_year') {
             $query->whereYear('date', $now->year);
+        } elseif (preg_match('/^\d{4}-\d{2}$/', $dateFilter)) {
+            // Mes específico en formato "YYYY-MM" (ej. "2026-03" para marzo)
+            [$year, $month] = array_map('intval', explode('-', $dateFilter));
+            $query->whereYear('date', $year)->whereMonth('date', $month);
         }
 
         // Clonamos la query para calcular totales sin que la paginación los corte
@@ -58,11 +62,17 @@ class IncomeController extends Controller
         $categories = Category::active()->ofType('income')->get(['id', 'name']);
         $vaults = Vault::orderBy('name')->get(['id', 'name']);
 
+        // Años con datos (más el actual) para poblar el submenú de mes específico.
+        $earliestDate = Income::min('date');
+        $earliestYear = $earliestDate ? Carbon::parse($earliestDate)->year : $now->year;
+        $availableYears = range($now->year, $earliestYear);
+
         return Inertia::render('Incomes/Index', [
             'incomes' => $incomes,
             'categories' => $categories,
             'vaults' => $vaults,
             'totals' => $totals,
+            'available_years' => $availableYears,
             'filters' => $request->only(['search', 'category_id', 'date_filter']),
             'open_create' => $request->boolean('new'),
         ]);
