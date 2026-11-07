@@ -62,25 +62,25 @@ class Expense extends Model
     }
 
     /**
-     * Genera el calendario de parcialidades de una compra a MSI.
+     * Calcula (sin persistir) el calendario de parcialidades de una compra a MSI.
      *
      * El total se reparte en centavos para que la suma de las parcialidades
      * sea exactamente el monto de la compra; el residuo cae en la última.
+     *
+     * @return array<int, array{number: int, amount: float, cut_date: string}>
      */
-    public function syncInstallments(): void
+    public function installmentSchedule(): array
     {
-        $this->installments()->delete();
-
         $months = (int) $this->installment_count;
 
         if ($months <= 1 || ! $this->card_id) {
-            return;
+            return [];
         }
 
         $card = Card::find($this->card_id);
 
         if (! $card) {
-            return;
+            return [];
         }
 
         $totalCents = (int) round((float) $this->amount * 100);
@@ -88,19 +88,39 @@ class Expense extends Model
 
         $cursor = $card->cycleFor($this->date)['cut_date']->startOfMonth();
 
+        $schedule = [];
+
         for ($number = 1; $number <= $months; $number++) {
             $amountCents = $number === $months
                 ? $totalCents - $baseCents * ($months - 1)
                 : $baseCents;
 
-            $this->installments()->create([
-                'card_id' => $card->id,
+            $schedule[] = [
                 'number' => $number,
                 'amount' => $amountCents / 100,
                 'cut_date' => $card->cutDateFor($cursor->year, $cursor->month)->toDateString(),
-            ]);
+            ];
 
             $cursor = $cursor->addMonthNoOverflow();
+        }
+
+        return $schedule;
+    }
+
+    /**
+     * Genera (persiste) el calendario de parcialidades de una compra a MSI.
+     */
+    public function syncInstallments(): void
+    {
+        $this->installments()->delete();
+
+        foreach ($this->installmentSchedule() as $partial) {
+            $this->installments()->create([
+                'card_id' => $this->card_id,
+                'number' => $partial['number'],
+                'amount' => $partial['amount'],
+                'cut_date' => $partial['cut_date'],
+            ]);
         }
     }
 }

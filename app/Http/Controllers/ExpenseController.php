@@ -6,9 +6,9 @@ use App\Models\Card;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Vault;
+use App\Services\ExpenseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class ExpenseController extends Controller
@@ -82,8 +82,7 @@ class ExpenseController extends Controller
 
     public function store(Request $request)
     {
-        $expense = Expense::create($this->validatedData($request));
-        $expense->syncInstallments();
+        app(ExpenseService::class)->create($this->validatedData($request));
 
         return redirect()->back()->with('success', 'Gasto registrado correctamente.');
     }
@@ -119,46 +118,6 @@ class ExpenseController extends Controller
             'installment_count' => 'nullable|integer|min:1|max:48',
         ]);
 
-        $validated['is_transfer'] = $request->boolean('is_transfer');
-        $validated['installment_count'] = (int) ($validated['installment_count'] ?? 1);
-
-        if ($validated['is_transfer'] && empty($validated['vault_id'])) {
-            throw ValidationException::withMessages([
-                'vault_id' => 'Una transferencia necesita una bóveda de origen.',
-            ]);
-        }
-
-        // Las parcialidades solo existen sobre una tarjeta.
-        if ($validated['installment_count'] > 1 && empty($validated['card_id'])) {
-            throw ValidationException::withMessages([
-                'card_id' => 'Los meses sin intereses necesitan una tarjeta.',
-            ]);
-        }
-
-        if ($validated['installment_count'] > 1 && $validated['is_transfer']) {
-            throw ValidationException::withMessages([
-                'installment_count' => 'Una transferencia no se puede diferir a meses.',
-            ]);
-        }
-
-        // Un cargo o sale de una bóveda (efectivo/débito) o se debe en la
-        // tarjeta. Las dos cosas a la vez descuadrarían ambos saldos.
-        if (! empty($validated['card_id']) && ! empty($validated['vault_id']) && ! $validated['is_transfer']) {
-            throw ValidationException::withMessages([
-                'card_id' => 'Un cargo no puede salir de una bóveda y de una tarjeta a la vez.',
-            ]);
-        }
-
-        // El cargo se asigna al corte que le corresponde. Los pagos no
-        // pertenecen a un estado de cuenta: lo liquidan. Una compra diferida
-        // tampoco: se reparte en parcialidades que cruzan varios cortes.
-        if (! empty($validated['card_id']) && ! $validated['is_transfer'] && $validated['installment_count'] === 1) {
-            $card = Card::findOrFail($validated['card_id']);
-            $validated['card_statement_id'] = $card->statementFor($validated['date'])->id;
-        } else {
-            $validated['card_statement_id'] = null;
-        }
-
-        return $validated;
+        return app(ExpenseService::class)->resolve($validated);
     }
 }
