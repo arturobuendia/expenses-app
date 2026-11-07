@@ -174,7 +174,10 @@ const onPreview = () => {
 
     previewedJson.value = form.json;
     previewedCardId.value = form.card_id;
-    form.post('/batch-expenses/preview', { preserveScroll: true });
+    form.post('/batch-expenses/preview', {
+        preserveScroll: true,
+        preserveUrl: true,
+    });
 };
 
 const onStore = () => {
