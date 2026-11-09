@@ -11,7 +11,7 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\VaultController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'Welcome')->name('home');
+Route::inertia('/', 'Welcome')->name('home')->middleware('guest');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Route::inertia('dashboard', 'Dashboard')->name('dashboard');
