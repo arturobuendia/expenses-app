@@ -27,7 +27,12 @@ class ExpenseController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
-        // 3. Filtro por Fechas (Por defecto "este mes")
+        // 3. Filtro por Tarjeta
+        if ($request->filled('card_id') && $request->card_id !== 'all') {
+            $query->where('card_id', $request->card_id);
+        }
+
+        // 4. Filtro por Fechas (Por defecto "este mes")
         $dateFilter = $request->input('date_filter', 'this_month');
         $now = Carbon::now();
 
@@ -85,7 +90,7 @@ class ExpenseController extends Controller
             'cards' => $cards,
             'totals' => $totals,
             'available_years' => $availableYears,
-            'filters' => $request->only(['search', 'category_id', 'date_filter']), // Regresamos el estado
+            'filters' => $request->only(['search', 'category_id', 'card_id', 'date_filter']), // Regresamos el estado
             'open_create' => $request->boolean('new'),
         ]);
     }

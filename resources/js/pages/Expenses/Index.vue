@@ -70,6 +70,7 @@ const props = defineProps<{
     filters: {
         search?: string;
         category_id?: string;
+        card_id?: string;
         date_filter?: string;
     };
     available_years: number[];
@@ -84,6 +85,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const activeFilters = ref({
     search: props.filters?.search || '',
     category_id: props.filters?.category_id || 'all',
+    card_id: props.filters?.card_id || 'all',
     date_filter: props.filters?.date_filter || 'this_month',
 });
 
@@ -340,6 +342,33 @@ const deleteExpense = (id: number) => {
                                 class="focus:bg-zinc-800 focus:text-zinc-100"
                             >
                                 {{ cat.name }}
+                            </SelectItem>
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+
+                <Select v-model="activeFilters.card_id">
+                    <SelectTrigger
+                        class="w-full border-zinc-800 bg-zinc-950 text-zinc-200 focus:ring-zinc-500 md:w-50"
+                    >
+                        <SelectValue placeholder="Todas las Tarjetas" />
+                    </SelectTrigger>
+                    <SelectContent
+                        class="border-zinc-800 bg-zinc-950 text-zinc-100"
+                    >
+                        <SelectGroup>
+                            <SelectItem
+                                value="all"
+                                class="focus:bg-zinc-800 focus:text-zinc-100"
+                                >Todas las Tarjetas
+                            </SelectItem>
+                            <SelectItem
+                                v-for="card in cards"
+                                :key="card.id"
+                                :value="card.id.toString()"
+                                class="focus:bg-zinc-800 focus:text-zinc-100"
+                            >
+                                {{ card.name }}
                             </SelectItem>
                         </SelectGroup>
                     </SelectContent>
