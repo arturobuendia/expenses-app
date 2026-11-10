@@ -113,3 +113,73 @@ test('marcar como pagado liquida el préstamo sin importar la dirección', funct
     $response->assertRedirect();
     expect($loan->fresh()->is_paid)->toBeTrue();
 });
+
+test('un abono reduce el saldo pendiente y los totales', function () {
+    $user = User::factory()->create();
+    $loan = makeLoan(['direction' => 'lent', 'amount' => 500]);
+
+    $this->actingAs($user)->post("/loans/{$loan->id}/payments", [
+        'amount' => 200,
+        'date' => now()->toDateString(),
+    ])->assertRedirect();
+
+    $fresh = $loan->fresh();
+
+    expect($fresh->payments()->count())->toBe(1)
+        ->and($fresh->remainingAmount())->toBe(300.0)
+        ->and($fresh->isSettled())->toBeFalse();
+
+    $this->actingAs($user)->get('/loans')->assertInertia(
+        fn ($page) => $page->where('totals.receivable_pending_amount', 300)
+    );
+});
+
+test('los abonos se acumulan y liquidan el préstamo al cubrir el monto', function () {
+    $user = User::factory()->create();
+    $loan = makeLoan(['direction' => 'lent', 'amount' => 500]);
+
+    $this->actingAs($user)->post("/loans/{$loan->id}/payments", [
+        'amount' => 300,
+        'date' => now()->toDateString(),
+    ])->assertRedirect();
+
+    $this->actingAs($user)->post("/loans/{$loan->id}/payments", [
+        'amount' => 200,
+        'date' => now()->toDateString(),
+    ])->assertRedirect();
+
+    $fresh = $loan->fresh();
+
+    expect($fresh->remainingAmount())->toBe(0.0)
+        ->and($fresh->isSettled())->toBeTrue();
+});
+
+test('un abono no puede exceder el saldo pendiente', function () {
+    $user = User::factory()->create();
+    $loan = makeLoan(['direction' => 'lent', 'amount' => 500]);
+
+    $this->actingAs($user)->post("/loans/{$loan->id}/payments", [
+        'amount' => 600,
+        'date' => now()->toDateString(),
+    ])->assertSessionHasErrors('amount');
+
+    expect($loan->fresh()->payments()->count())->toBe(0);
+});
+
+test('se puede eliminar un abono', function () {
+    $user = User::factory()->create();
+    $loan = makeLoan(['direction' => 'lent', 'amount' => 500]);
+
+    $this->actingAs($user)->post("/loans/{$loan->id}/payments", [
+        'amount' => 200,
+        'date' => now()->toDateString(),
+    ])->assertRedirect();
+
+    $payment = $loan->fresh()->payments()->first();
+
+    $this->actingAs($user)->delete("/loans/{$loan->id}/payments/{$payment->id}")
+        ->assertRedirect();
+
+    expect($loan->fresh()->payments()->count())->toBe(0)
+        ->and($loan->fresh()->remainingAmount())->toBe(500.0);
+});

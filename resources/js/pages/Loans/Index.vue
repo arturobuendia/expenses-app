@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import CurrencyInput from '@/components/CurrencyInput.vue';
 import type { BreadcrumbItem } from '@/types';
-import type { Loan } from '@/types/finances';
+import type { Loan, LoanPayment } from '@/types/finances';
 import { useFormatter } from '@/composables/useFormatter';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,7 +38,7 @@ import {
 
 const { formatCurrency, formatDate, toDateInput } = useFormatter();
 
-defineProps<{
+const props = defineProps<{
     loans: Loan[];
     totals: {
         receivable_pending_amount: number;
@@ -108,15 +108,83 @@ const submitForm = () => {
     }
 };
 
-const markAsPaid = (id: number) => {
-    router.patch(`/loans/${id}/pay`);
-};
-
 const deleteLoan = (id: number) => {
     if (confirm('¿Seguro que quieres borrar este registro?')) {
         router.delete(`/loans/${id}`);
     }
 };
+
+// --- Abonos (pagos parciales) ---
+
+const isPaymentOpen = ref(false);
+const paymentLoanId = ref<number | null>(null);
+const paymentForm = useForm({
+    amount: '',
+    date: new Date().toISOString().split('T')[0],
+    note: '',
+});
+
+const openPayment = (loan: Loan) => {
+    paymentLoanId.value = loan.id;
+    paymentForm.reset();
+    paymentForm.amount = (loan.remaining_amount ?? loan.amount).toString();
+    paymentForm.date = new Date().toISOString().split('T')[0];
+    paymentForm.note = '';
+    isPaymentOpen.value = true;
+};
+
+const closePayment = () => {
+    isPaymentOpen.value = false;
+    setTimeout(() => {
+        paymentForm.reset();
+        paymentForm.clearErrors();
+    }, 200);
+};
+
+const submitPayment = () => {
+    if (paymentLoanId.value) {
+        paymentForm.post(`/loans/${paymentLoanId.value}/payments`, {
+            onSuccess: () => closePayment(),
+        });
+    }
+};
+
+// --- Historial de abonos ---
+
+const historyLoanId = ref<number | null>(null);
+const isHistoryOpen = ref(false);
+
+const historyLoan = computed(
+    () => props.loans.find((loan) => loan.id === historyLoanId.value) ?? null,
+);
+
+const openHistory = (loan: Loan) => {
+    historyLoanId.value = loan.id;
+    isHistoryOpen.value = true;
+};
+
+const deletePayment = (payment: LoanPayment) => {
+    if (!historyLoan.value) return;
+
+    if (confirm('¿Eliminar este abono?')) {
+        router.delete(`/loans/${historyLoan.value.id}/payments/${payment.id}`);
+    }
+};
+
+// --- Helpers de presentación ---
+
+const statusLabel = (loan: Loan) => {
+    if (loan.is_settled) {
+        return loan.direction === 'lent' ? 'Cobrado' : 'Pagado';
+    }
+    if ((loan.paid_amount ?? 0) > 0) {
+        return 'Parcial';
+    }
+    return 'Pendiente';
+};
+
+const remainingOf = (loan: Loan) =>
+    loan.remaining_amount ?? Number(loan.amount);
 </script>
 
 <template>
@@ -243,6 +311,10 @@ const deleteLoan = (id: number) => {
                                         >Monto</TableHead
                                     >
                                     <TableHead
+                                        class="text-right font-medium text-zinc-400"
+                                        >Restante</TableHead
+                                    >
+                                    <TableHead
                                         class="text-center font-medium text-zinc-400"
                                         >Estado</TableHead
                                     >
@@ -258,7 +330,7 @@ const deleteLoan = (id: number) => {
                                     :key="loan.id"
                                     :class="[
                                         'border-zinc-800 transition-colors hover:bg-zinc-800/50',
-                                        loan.is_paid ? 'opacity-60' : '',
+                                        loan.is_settled ? 'opacity-60' : '',
                                     ]"
                                 >
                                     <TableCell
@@ -303,38 +375,68 @@ const deleteLoan = (id: number) => {
                                     >
                                         {{ formatCurrency(loan.amount) }}
                                     </TableCell>
-                                    <TableCell class="text-center">
-                                        <span
-                                            v-if="loan.is_paid"
-                                            class="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20 ring-inset"
+                                    <TableCell class="text-right">
+                                        <div
+                                            class="font-mono font-medium text-zinc-100 tabular-nums"
                                         >
                                             {{
-                                                loan.direction === 'lent'
-                                                    ? 'Cobrado'
-                                                    : 'Pagado'
+                                                formatCurrency(
+                                                    remainingOf(loan),
+                                                )
                                             }}
-                                        </span>
+                                        </div>
+                                        <div
+                                            v-if="
+                                                !loan.is_settled &&
+                                                (loan.paid_amount ?? 0) > 0
+                                            "
+                                            class="text-xs text-zinc-500"
+                                        >
+                                            Abonado
+                                            {{
+                                                formatCurrency(
+                                                    loan.paid_amount ?? 0,
+                                                )
+                                            }}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell class="text-center">
                                         <span
-                                            v-else
                                             :class="[
                                                 'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset',
-                                                loan.direction === 'lent'
-                                                    ? 'bg-amber-500/10 text-amber-400 ring-amber-500/20'
-                                                    : 'bg-red-500/10 text-red-400 ring-red-500/20',
+                                                loan.is_settled
+                                                    ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'
+                                                    : statusLabel(loan) ===
+                                                        'Parcial'
+                                                      ? 'bg-sky-500/10 text-sky-400 ring-sky-500/20'
+                                                      : loan.direction ===
+                                                          'lent'
+                                                        ? 'bg-amber-500/10 text-amber-400 ring-amber-500/20'
+                                                        : 'bg-red-500/10 text-red-400 ring-red-500/20',
                                             ]"
                                         >
-                                            Pendiente
+                                            {{ statusLabel(loan) }}
                                         </span>
                                     </TableCell>
                                     <TableCell class="space-x-2 text-right">
                                         <Button
-                                            v-if="!loan.is_paid"
+                                            v-if="!loan.is_settled"
                                             variant="outline"
                                             size="sm"
-                                            @click="markAsPaid(loan.id)"
+                                            @click="openPayment(loan)"
                                             class="border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white"
                                         >
-                                            Marcar Pagado
+                                            Abonar
+                                        </Button>
+
+                                        <Button
+                                            v-if="loan.payments?.length"
+                                            variant="ghost"
+                                            size="sm"
+                                            @click="openHistory(loan)"
+                                            class="text-zinc-400 hover:text-zinc-200"
+                                        >
+                                            Ver abonos
                                         </Button>
 
                                         <Button
@@ -360,7 +462,7 @@ const deleteLoan = (id: number) => {
                                     class="border-zinc-800 hover:bg-transparent"
                                 >
                                     <TableCell
-                                        colspan="6"
+                                        colspan="7"
                                         class="py-8 text-center text-zinc-500"
                                     >
                                         No hay préstamos registrados. Registra
@@ -527,6 +629,165 @@ const deleteLoan = (id: number) => {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog v-model:open="isPaymentOpen">
+                <DialogContent
+                    class="border-zinc-800 bg-zinc-950 text-zinc-100 sm:max-w-md"
+                >
+                    <DialogHeader>
+                        <DialogTitle>Registrar Abono</DialogTitle>
+                        <DialogDescription class="text-zinc-400">
+                            Registra un pago parcial sobre el préstamo.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form
+                        @submit.prevent="submitPayment"
+                        class="space-y-4 py-4"
+                    >
+                        <div class="space-y-2">
+                            <Label for="payment_amount" class="text-zinc-400"
+                                >Monto del abono</Label
+                            >
+                            <CurrencyInput
+                                id="payment_amount"
+                                v-model="paymentForm.amount"
+                                required
+                                class="border-zinc-800 bg-zinc-900 text-zinc-100 focus-visible:ring-zinc-500"
+                                placeholder="$0.00"
+                            />
+                            <span
+                                v-if="paymentForm.errors.amount"
+                                class="text-xs text-red-500"
+                                >{{ paymentForm.errors.amount }}</span
+                            >
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label for="payment_date" class="text-zinc-400"
+                                >Fecha del abono</Label
+                            >
+                            <Input
+                                id="payment_date"
+                                v-model="paymentForm.date"
+                                type="date"
+                                required
+                                class="border-zinc-800 bg-zinc-900 text-zinc-100 scheme-dark focus-visible:ring-zinc-500"
+                            />
+                            <span
+                                v-if="paymentForm.errors.date"
+                                class="text-xs text-red-500"
+                                >{{ paymentForm.errors.date }}</span
+                            >
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label for="payment_note" class="text-zinc-400"
+                                >Nota (Opcional)</Label
+                            >
+                            <Input
+                                id="payment_note"
+                                v-model="paymentForm.note"
+                                class="border-zinc-800 bg-zinc-900 text-zinc-100 focus-visible:ring-zinc-500"
+                                placeholder="Ej. Primera parcialidad"
+                            />
+                            <span
+                                v-if="paymentForm.errors.note"
+                                class="text-xs text-red-500"
+                                >{{ paymentForm.errors.note }}</span
+                            >
+                        </div>
+
+                        <DialogFooter
+                            class="mt-2 border-t border-zinc-800 pt-4"
+                        >
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                @click="closePayment"
+                                class="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                :disabled="paymentForm.processing"
+                            >
+                                {{
+                                    paymentForm.processing
+                                        ? 'Guardando...'
+                                        : 'Guardar abono'
+                                }}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog v-model:open="isHistoryOpen">
+                <DialogContent
+                    class="border-zinc-800 bg-zinc-950 text-zinc-100 sm:max-w-md"
+                >
+                    <DialogHeader>
+                        <DialogTitle>Abonos</DialogTitle>
+                        <DialogDescription class="text-zinc-400">
+                            Historial de abonos de
+                            {{ historyLoan?.counterparty_name }}.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div class="max-h-72 space-y-2 overflow-y-auto py-4">
+                        <div
+                            v-if="historyLoan?.payments?.length"
+                            class="space-y-2"
+                        >
+                            <div
+                                v-for="payment in historyLoan.payments"
+                                :key="payment.id"
+                                class="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-2"
+                            >
+                                <div>
+                                    <div
+                                        class="font-mono font-medium text-zinc-100 tabular-nums"
+                                    >
+                                        {{ formatCurrency(payment.amount) }}
+                                    </div>
+                                    <div class="text-xs text-zinc-500">
+                                        {{ formatDate(payment.date) }}
+                                        <template v-if="payment.note">
+                                            · {{ payment.note }}
+                                        </template>
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    @click="deletePayment(payment)"
+                                    class="text-red-500 hover:bg-red-500/10 hover:text-red-400"
+                                >
+                                    Eliminar
+                                </Button>
+                            </div>
+                        </div>
+                        <p
+                            v-else
+                            class="py-6 text-center text-sm text-zinc-500"
+                        >
+                            Sin abonos registrados.
+                        </p>
+                    </div>
+
+                    <DialogFooter class="border-t border-zinc-800 pt-4">
+                        <Button
+                            variant="ghost"
+                            @click="isHistoryOpen = false"
+                            class="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                        >
+                            Cerrar
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

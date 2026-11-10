@@ -123,4 +123,20 @@ export interface Loan {
     description: string | null;
     date: string;
     is_paid: boolean;
+    /** Total abonado (suma de abonos). */
+    paid_amount?: number;
+    /** Saldo pendiente: monto menos abonos. */
+    remaining_amount?: number;
+    /** true cuando el saldo pendiente llega a cero. */
+    is_settled?: boolean;
+    /** Abonos (pagos parciales) registrados. */
+    payments?: LoanPayment[];
+}
+
+export interface LoanPayment {
+    id: number;
+    loan_id: number;
+    amount: number | string;
+    date: string;
+    note: string | null;
 }

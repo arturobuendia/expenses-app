@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Loan;
+use App\Models\LoanPayment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -10,34 +11,40 @@ class LoanController extends Controller
 {
     public function index()
     {
-        // Traemos todos los préstamos para calcular los totales
-        $loans = Loan::orderBy('is_paid', 'asc')
-            ->orderByDesc('date')
-            ->get();
+        // Traemos todos los préstamos con sus abonos para calcular los totales
+        // sobre el saldo pendiente, no sobre el monto original.
+        $loans = Loan::with('payments')
+            ->get()
+            ->each(fn (Loan $loan) => $loan->withComputedPaymentTotals());
 
-        // Cada registro es una cuenta por cobrar (`lent`) o por pagar
-        // (`borrowed`); se separan para no mezclar ambas direcciones.
-        $pendingLoans = $loans->where('is_paid', false);
-        $paidLoans = $loans->where('is_paid', true);
+        // Pendiente = saldo restante mayor a cero; liquidado = saldo en cero.
+        $pendingLoans = $loans->filter(fn (Loan $loan) => ! $loan->is_settled);
+        $settledLoans = $loans->filter(fn (Loan $loan) => $loan->is_settled);
 
         $receivablePending = $pendingLoans->where('direction', 'lent');
         $payablePending = $pendingLoans->where('direction', 'borrowed');
-        $receivableSettled = $paidLoans->where('direction', 'lent');
-        $payableSettled = $paidLoans->where('direction', 'borrowed');
+        $receivableSettled = $settledLoans->where('direction', 'lent');
+        $payableSettled = $settledLoans->where('direction', 'borrowed');
 
         $totals = [
-            'receivable_pending_amount' => $receivablePending->sum('amount'),
+            'receivable_pending_amount' => (float) $receivablePending->sum('remaining_amount'),
             'receivable_pending_count' => $receivablePending->count(),
-            'payable_pending_amount' => $payablePending->sum('amount'),
+            'payable_pending_amount' => (float) $payablePending->sum('remaining_amount'),
             'payable_pending_count' => $payablePending->count(),
-            'receivable_settled_amount' => $receivableSettled->sum('amount'),
+            'receivable_settled_amount' => (float) $receivableSettled->sum('amount'),
             'receivable_settled_count' => $receivableSettled->count(),
-            'payable_settled_amount' => $payableSettled->sum('amount'),
+            'payable_settled_amount' => (float) $payableSettled->sum('amount'),
             'payable_settled_count' => $payableSettled->count(),
         ];
 
+        // Pendientes primero, después liquidados, y por fecha descendente.
+        $loans = $loans
+            ->sortBy(fn (Loan $loan) => $loan->is_settled ? 1 : 0)
+            ->sortByDesc('date')
+            ->values();
+
         return Inertia::render('Loans/Index', [
-            'loans' => $loans->values(),
+            'loans' => $loans,
             'totals' => $totals,
         ]);
     }
@@ -79,6 +86,36 @@ class LoanController extends Controller
         $loan->update(['is_paid' => true]);
 
         return redirect()->back()->with('success', '¡Préstamo marcado como pagado!');
+    }
+
+    public function storePayment(Request $request, Loan $loan)
+    {
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'date' => 'required|date',
+            'note' => 'nullable|string|max:255',
+        ]);
+
+        $remaining = $loan->remainingAmount();
+
+        if ((float) $validated['amount'] > $remaining) {
+            return redirect()->back()
+                ->withErrors(['amount' => 'El abono no puede exceder el saldo pendiente.'])
+                ->withInput();
+        }
+
+        $loan->payments()->create($validated);
+
+        return redirect()->back()->with('success', 'Abono registrado.');
+    }
+
+    public function destroyPayment(Loan $loan, LoanPayment $payment)
+    {
+        abort_if($payment->loan_id !== $loan->id, 404);
+
+        $payment->delete();
+
+        return redirect()->back()->with('success', 'Abono eliminado.');
     }
 
     public function destroy(Loan $loan)

@@ -61,6 +61,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/loans/{loan}', [LoanController::class, 'update'])->name('loans.update');
     Route::delete('/loans/{loan}', [LoanController::class, 'destroy'])->name('loans.destroy');
     Route::patch('/loans/{loan}/pay', [LoanController::class, 'markAsPaid'])->name('loans.pay');
+    Route::post('/loans/{loan}/payments', [LoanController::class, 'storePayment'])->name('loans.payments.store');
+    Route::delete('/loans/{loan}/payments/{payment}', [LoanController::class, 'destroyPayment'])->name('loans.payments.destroy');
 
     // Categorías
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
