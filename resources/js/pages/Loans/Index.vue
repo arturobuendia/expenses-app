@@ -27,6 +27,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
     Select,
     SelectContent,
@@ -738,46 +739,48 @@ const remainingOf = (loan: Loan) =>
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div class="max-h-72 space-y-2 overflow-y-auto py-4">
-                        <div
-                            v-if="historyLoan?.payments?.length"
-                            class="space-y-2"
-                        >
+                    <ScrollArea class="h-72">
+                        <div class="space-y-2 py-4 pr-3">
                             <div
-                                v-for="payment in historyLoan.payments"
-                                :key="payment.id"
-                                class="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-2"
+                                v-if="historyLoan?.payments?.length"
+                                class="space-y-2"
                             >
-                                <div>
-                                    <div
-                                        class="font-mono font-medium text-zinc-100 tabular-nums"
-                                    >
-                                        {{ formatCurrency(payment.amount) }}
-                                    </div>
-                                    <div class="text-xs text-zinc-500">
-                                        {{ formatDate(payment.date) }}
-                                        <template v-if="payment.note">
-                                            · {{ payment.note }}
-                                        </template>
-                                    </div>
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    @click="deletePayment(payment)"
-                                    class="text-red-500 hover:bg-red-500/10 hover:text-red-400"
+                                <div
+                                    v-for="payment in historyLoan.payments"
+                                    :key="payment.id"
+                                    class="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-2"
                                 >
-                                    Eliminar
-                                </Button>
+                                    <div>
+                                        <div
+                                            class="font-mono font-medium text-zinc-100 tabular-nums"
+                                        >
+                                            {{ formatCurrency(payment.amount) }}
+                                        </div>
+                                        <div class="text-xs text-zinc-500">
+                                            {{ formatDate(payment.date) }}
+                                            <template v-if="payment.note">
+                                                · {{ payment.note }}
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        @click="deletePayment(payment)"
+                                        class="text-red-500 hover:bg-red-500/10 hover:text-red-400"
+                                    >
+                                        Eliminar
+                                    </Button>
+                                </div>
                             </div>
+                            <p
+                                v-else
+                                class="py-6 text-center text-sm text-zinc-500"
+                            >
+                                Sin abonos registrados.
+                            </p>
                         </div>
-                        <p
-                            v-else
-                            class="py-6 text-center text-sm text-zinc-500"
-                        >
-                            Sin abonos registrados.
-                        </p>
-                    </div>
+                    </ScrollArea>
 
                     <DialogFooter class="border-t border-zinc-800 pt-4">
                         <Button

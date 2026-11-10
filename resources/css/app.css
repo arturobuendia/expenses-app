@@ -143,3 +143,37 @@
         @apply bg-background text-foreground;
     }
 }
+
+/*
+  Native scrollbars (horizontal table overflow, page scroll) styled to match
+  the shadcn ScrollArea thumb: thin, rounded, border-colored, transparent track.
+*/
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    background: var(--border);
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 0% 22%);
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
