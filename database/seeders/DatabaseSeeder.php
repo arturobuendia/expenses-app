@@ -16,7 +16,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-
         $now = Carbon::now();
 
         // 1. Crear el Catálogo Estricto de Categorías
