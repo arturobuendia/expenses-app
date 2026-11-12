@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
+import { Share2 } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import CurrencyInput from '@/components/CurrencyInput.vue';
+import LoanDetailDialog from '@/components/loans/LoanDetailDialog.vue';
 import type { BreadcrumbItem } from '@/types';
-import type { Loan, LoanPayment } from '@/types/finances';
+import type { Loan } from '@/types/finances';
 import { useFormatter } from '@/composables/useFormatter';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +29,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
     Select,
     SelectContent,
@@ -150,28 +151,6 @@ const submitPayment = () => {
     }
 };
 
-// --- Historial de abonos ---
-
-const historyLoanId = ref<number | null>(null);
-const isHistoryOpen = ref(false);
-
-const historyLoan = computed(
-    () => props.loans.find((loan) => loan.id === historyLoanId.value) ?? null,
-);
-
-const openHistory = (loan: Loan) => {
-    historyLoanId.value = loan.id;
-    isHistoryOpen.value = true;
-};
-
-const deletePayment = (payment: LoanPayment) => {
-    if (!historyLoan.value) return;
-
-    if (confirm('¿Eliminar este abono?')) {
-        router.delete(`/loans/${historyLoan.value.id}/payments/${payment.id}`);
-    }
-};
-
 // --- Helpers de presentación ---
 
 const statusLabel = (loan: Loan) => {
@@ -229,6 +208,45 @@ const personTotals = computed(() => {
         iOweCount: borrowed.length,
     };
 });
+
+// --- Detalle y card compartible ---
+
+const isDetailOpen = ref(false);
+const detailLoanId = ref<number | null>(null);
+
+const detailLoan = computed(
+    () => props.loans.find((loan) => loan.id === detailLoanId.value) ?? null,
+);
+
+/** Todos los préstamos de la misma persona, para el estado de cuenta. */
+const detailPersonLoans = computed(() => {
+    const person = detailLoan.value?.counterparty_name;
+
+    if (!person) {
+        return [];
+    }
+
+    return props.loans.filter((loan) => loan.counterparty_name === person);
+});
+
+/**
+ * El detalle hereda el contexto: si la lista está filtrada por persona, abre
+ * el estado de cuenta completo; si no, abre el préstamo al que le dieron clic.
+ */
+const detailInitialVariant = computed<'loan' | 'person'>(() =>
+    hasPersonFilter.value ? 'person' : 'loan',
+);
+
+const openDetail = (loan: Loan) => {
+    detailLoanId.value = loan.id;
+    isDetailOpen.value = true;
+};
+
+const deletePayment = (loanId: number, paymentId: number) => {
+    if (confirm('¿Eliminar este abono?')) {
+        router.delete(`/loans/${loanId}/payments/${paymentId}`);
+    }
+};
 </script>
 
 <template>
@@ -447,9 +465,10 @@ const personTotals = computed(() => {
                                     v-for="loan in filteredLoans"
                                     :key="loan.id"
                                     :class="[
-                                        'border-zinc-800 transition-colors hover:bg-zinc-800/50',
+                                        'cursor-pointer border-zinc-800 transition-colors hover:bg-zinc-800/50',
                                         loan.is_settled ? 'opacity-60' : '',
                                     ]"
+                                    @click="openDetail(loan)"
                                 >
                                     <TableCell
                                         class="whitespace-nowrap text-zinc-400"
@@ -538,29 +557,30 @@ const personTotals = computed(() => {
                                     </TableCell>
                                     <TableCell class="space-x-2 text-right">
                                         <Button
+                                            variant="outline"
+                                            size="icon-sm"
+                                            class="border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                                            aria-label="Compartir préstamo"
+                                            title="Compartir préstamo"
+                                            @click.stop="openDetail(loan)"
+                                        >
+                                            <Share2 />
+                                        </Button>
+
+                                        <Button
                                             v-if="!loan.is_settled"
                                             variant="outline"
                                             size="sm"
-                                            @click="openPayment(loan)"
+                                            @click.stop="openPayment(loan)"
                                             class="border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white"
                                         >
                                             Abonar
                                         </Button>
 
                                         <Button
-                                            v-if="loan.payments?.length"
                                             variant="ghost"
                                             size="sm"
-                                            @click="openHistory(loan)"
-                                            class="text-zinc-400 hover:text-zinc-200"
-                                        >
-                                            Ver abonos
-                                        </Button>
-
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            @click="openModal(loan)"
+                                            @click.stop="openModal(loan)"
                                             class="text-zinc-400 hover:text-zinc-200"
                                         >
                                             Editar
@@ -568,7 +588,7 @@ const personTotals = computed(() => {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            @click="deleteLoan(loan.id)"
+                                            @click.stop="deleteLoan(loan.id)"
                                             class="text-red-500 hover:bg-red-500/10 hover:text-red-400"
                                         >
                                             Borrar
@@ -851,72 +871,13 @@ const personTotals = computed(() => {
                 </DialogContent>
             </Dialog>
 
-            <Dialog v-model:open="isHistoryOpen">
-                <DialogContent
-                    class="border-zinc-800 bg-zinc-950 text-zinc-100 sm:max-w-md"
-                >
-                    <DialogHeader>
-                        <DialogTitle>Abonos</DialogTitle>
-                        <DialogDescription class="text-zinc-400">
-                            Historial de abonos de
-                            {{ historyLoan?.counterparty_name }}.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <ScrollArea class="h-72">
-                        <div class="space-y-2 py-4 pr-3">
-                            <div
-                                v-if="historyLoan?.payments?.length"
-                                class="space-y-2"
-                            >
-                                <div
-                                    v-for="payment in historyLoan.payments"
-                                    :key="payment.id"
-                                    class="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-2"
-                                >
-                                    <div>
-                                        <div
-                                            class="font-mono font-medium text-zinc-100 tabular-nums"
-                                        >
-                                            {{ formatCurrency(payment.amount) }}
-                                        </div>
-                                        <div class="text-xs text-zinc-500">
-                                            {{ formatDate(payment.date) }}
-                                            <template v-if="payment.note">
-                                                · {{ payment.note }}
-                                            </template>
-                                        </div>
-                                    </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        @click="deletePayment(payment)"
-                                        class="text-red-500 hover:bg-red-500/10 hover:text-red-400"
-                                    >
-                                        Eliminar
-                                    </Button>
-                                </div>
-                            </div>
-                            <p
-                                v-else
-                                class="py-6 text-center text-sm text-zinc-500"
-                            >
-                                Sin abonos registrados.
-                            </p>
-                        </div>
-                    </ScrollArea>
-
-                    <DialogFooter class="border-t border-zinc-800 pt-4">
-                        <Button
-                            variant="ghost"
-                            @click="isHistoryOpen = false"
-                            class="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                        >
-                            Cerrar
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <LoanDetailDialog
+                v-model:open="isDetailOpen"
+                :loan="detailLoan"
+                :person-loans="detailPersonLoans"
+                :initial-variant="detailInitialVariant"
+                @delete-payment="deletePayment"
+            />
         </div>
     </AppLayout>
 </template>
