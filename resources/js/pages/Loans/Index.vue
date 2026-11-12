@@ -186,6 +186,49 @@ const statusLabel = (loan: Loan) => {
 
 const remainingOf = (loan: Loan) =>
     loan.remaining_amount ?? Number(loan.amount);
+
+// --- Filtro por persona ---
+
+const selectedName = ref<string>('all');
+
+const uniqueNames = computed(() => {
+    const names = props.loans.map((loan) => loan.counterparty_name);
+
+    return [...new Set(names)].sort((a, b) => a.localeCompare(b));
+});
+
+const hasPersonFilter = computed(() => selectedName.value !== 'all');
+
+const filteredLoans = computed(() => {
+    if (!hasPersonFilter.value) {
+        return props.loans;
+    }
+
+    return props.loans.filter(
+        (loan) => loan.counterparty_name === selectedName.value,
+    );
+});
+
+/**
+ * Totales por persona sobre el saldo pendiente (remaining_amount), igual que
+ * las tarjetas de totales: lo liquidado no cuenta como deuda activa.
+ */
+const personTotals = computed(() => {
+    const pending = filteredLoans.value.filter((loan) => !loan.is_settled);
+
+    const lent = pending.filter((loan) => loan.direction === 'lent');
+    const borrowed = pending.filter((loan) => loan.direction === 'borrowed');
+
+    const sumRemaining = (loans: Loan[]) =>
+        loans.reduce((total, loan) => total + remainingOf(loan), 0);
+
+    return {
+        owedToMe: sumRemaining(lent),
+        owedToMeCount: lent.length,
+        iOwe: sumRemaining(borrowed),
+        iOweCount: borrowed.length,
+    };
+});
 </script>
 
 <template>
@@ -288,6 +331,80 @@ const remainingOf = (loan: Loan) =>
                 </Card>
             </div>
 
+            <div class="mb-6 flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <Label class="text-zinc-400">Persona</Label>
+                    <Select v-model="selectedName">
+                        <SelectTrigger
+                            class="w-64 border-zinc-800 bg-zinc-900 text-zinc-100 focus:ring-zinc-500"
+                        >
+                            <SelectValue placeholder="Todas las personas" />
+                        </SelectTrigger>
+                        <SelectContent
+                            class="border-zinc-800 bg-zinc-950 text-zinc-100"
+                        >
+                            <SelectGroup>
+                                <SelectItem
+                                    value="all"
+                                    class="focus:bg-zinc-800 focus:text-zinc-100"
+                                >
+                                    Todas las personas
+                                </SelectItem>
+                                <SelectItem
+                                    v-for="name in uniqueNames"
+                                    :key="name"
+                                    :value="name"
+                                    class="focus:bg-zinc-800 focus:text-zinc-100"
+                                >
+                                    {{ name }}
+                                </SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
+            <div
+                v-if="hasPersonFilter"
+                class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2"
+            >
+                <Card class="border-amber-500/20 bg-amber-500/5 text-zinc-100">
+                    <CardContent class="flex items-center justify-between py-4">
+                        <div>
+                            <p class="text-sm font-medium text-zinc-400">
+                                {{ selectedName }} te debe en total
+                            </p>
+                            <p
+                                class="font-mono text-2xl font-bold text-amber-400 tabular-nums"
+                            >
+                                {{ formatCurrency(personTotals.owedToMe) }}
+                            </p>
+                        </div>
+                        <p class="text-xs text-zinc-500">
+                            {{ personTotals.owedToMeCount }} préstamos activos
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card class="border-red-500/20 bg-red-500/5 text-zinc-100">
+                    <CardContent class="flex items-center justify-between py-4">
+                        <div>
+                            <p class="text-sm font-medium text-zinc-400">
+                                Le debes a {{ selectedName }} en total
+                            </p>
+                            <p
+                                class="font-mono text-2xl font-bold text-red-400 tabular-nums"
+                            >
+                                {{ formatCurrency(personTotals.iOwe) }}
+                            </p>
+                        </div>
+                        <p class="text-xs text-zinc-500">
+                            {{ personTotals.iOweCount }} deudas activas
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+
             <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
                 <CardContent class="p-0">
                     <div class="overflow-x-auto">
@@ -327,7 +444,7 @@ const remainingOf = (loan: Loan) =>
                             </TableHeader>
                             <TableBody>
                                 <TableRow
-                                    v-for="loan in loans"
+                                    v-for="loan in filteredLoans"
                                     :key="loan.id"
                                     :class="[
                                         'border-zinc-800 transition-colors hover:bg-zinc-800/50',
@@ -459,15 +576,22 @@ const remainingOf = (loan: Loan) =>
                                     </TableCell>
                                 </TableRow>
                                 <TableRow
-                                    v-if="loans.length === 0"
+                                    v-if="filteredLoans.length === 0"
                                     class="border-zinc-800 hover:bg-transparent"
                                 >
                                     <TableCell
                                         colspan="7"
                                         class="py-8 text-center text-zinc-500"
                                     >
-                                        No hay préstamos registrados. Registra
-                                        dinero que te deban o que tú debas.
+                                        <template v-if="hasPersonFilter">
+                                            {{ selectedName }} no tiene
+                                            préstamos registrados.
+                                        </template>
+                                        <template v-else>
+                                            No hay préstamos registrados.
+                                            Registra dinero que te deban o que
+                                            tú debas.
+                                        </template>
                                     </TableCell>
                                 </TableRow>
                             </TableBody>
