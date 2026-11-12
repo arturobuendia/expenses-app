@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 class WhaasService
 {
     protected string $apiUrl;
+
     protected string $apiKey;
 
     public function __construct()
@@ -27,7 +28,8 @@ class WhaasService
 
             return $response->successful();
         } catch (\Exception $e) {
-            Log::error("Error enviando mensaje por Whaas: " . $e->getMessage());
+            Log::error('Error enviando mensaje por Whaas: '.$e->getMessage());
+
             return false;
         }
     }

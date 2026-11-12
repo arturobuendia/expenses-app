@@ -10,7 +10,7 @@ class AiCategorizationService
     public function categorize(string $message): array
     {
         $categories = Category::active()->get(['id', 'name', 'type']);
-        $categoriesContext = $categories->map(fn($cat) => "ID: {$cat->id} | Nombre: {$cat->name} | Tipo: {$cat->type}")->implode("\n");
+        $categoriesContext = $categories->map(fn ($cat) => "ID: {$cat->id} | Nombre: {$cat->name} | Tipo: {$cat->type}")->implode("\n");
 
         $prompt = <<<EOT
 Eres un asistente financiero minimalista. Tu objetivo es analizar el mensaje del usuario y extraer los datos.
@@ -38,10 +38,12 @@ EOT;
             ->post('https://api.openai.com/v1/chat/completions', [
                 'model' => 'gpt-4o-mini',
                 'response_format' => ['type' => 'json_object'],
-                'messages' => [['role' => 'system', 'content' => $prompt]]
+                'messages' => [['role' => 'system', 'content' => $prompt]],
             ]);
 
-        if (!$response->successful()) throw new \Exception('Error al comunicarse con la IA');
+        if (! $response->successful()) {
+            throw new \Exception('Error al comunicarse con la IA');
+        }
 
         return json_decode($response->json('choices.0.message.content'), true);
     }

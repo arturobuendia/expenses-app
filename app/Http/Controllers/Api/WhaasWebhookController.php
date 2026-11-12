@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Services\AiCategorizationService;
 use App\Services\FinanceManagerService;
 use App\Services\WhaasService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class WhaasWebhookController extends Controller
@@ -17,11 +17,11 @@ class WhaasWebhookController extends Controller
         FinanceManagerService $finance,
         WhaasService $whaas
     ) {
-        //TODO: Validar que el request venga de Whaas (token secreto o similar)
+        // TODO: Validar que el request venga de Whaas (token secreto o similar)
         $messageText = $request->input('message');
         $fromNumber = $request->input('from');
 
-        if (!$messageText || !$fromNumber) {
+        if (! $messageText || ! $fromNumber) {
             return response()->json(['error' => 'Payload inválido o incompleto'], 400);
         }
 
@@ -35,7 +35,7 @@ class WhaasWebhookController extends Controller
             // 3. Armamos un mensaje de confirmación bonito
             $tipo = $parsedData['type'] === 'expense' ? 'Gasto' : 'Ingreso';
             $monto = number_format($record->amount, 2);
-            
+
             if ($parsedData['type'] === 'loan') {
                 $respuesta = "✅ Anotado: Le prestaste $\n{$monto} a {$record->counterparty_name}. ({$record->description})";
             } else {
@@ -48,9 +48,9 @@ class WhaasWebhookController extends Controller
 
             return response()->json(['status' => 'success', 'data' => $record]);
         } catch (\Exception $e) {
-            Log::error("Error en Webhook Whaas: " . $e->getMessage());
+            Log::error('Error en Webhook Whaas: '.$e->getMessage());
 
-            $whaas->sendMessage($fromNumber, "❌ No pude procesar el mensaje. Intenta ser más claro con el monto y el concepto.");
+            $whaas->sendMessage($fromNumber, '❌ No pude procesar el mensaje. Intenta ser más claro con el monto y el concepto.');
 
             return response()->json(['status' => 'error', 'message' => 'Internal Server Error'], 500);
         }
