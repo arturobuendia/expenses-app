@@ -5,8 +5,9 @@ import { ChevronDown } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import CurrencyInput from '@/components/CurrencyInput.vue';
 import CategoryCombobox from '@/components/CategoryCombobox.vue';
+import Pagination from '@/components/Pagination.vue';
 import type { BreadcrumbItem } from '@/types';
-import type { Expense, Category } from '@/types/finances';
+import type { Expense, Category, Paginator } from '@/types/finances';
 import { useFormatter } from '@/composables/useFormatter';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,10 +54,7 @@ import {
 const { formatCurrency, formatDate, toDateInput } = useFormatter();
 
 const props = defineProps<{
-    expenses: {
-        data: Expense[];
-        links: any[];
-    };
+    expenses: Paginator<Expense>;
     categories: Category[];
     vaults: { id: number; name: string }[];
     cards: { id: number; name: string }[];
@@ -278,6 +276,15 @@ const allSelected = computed(
     () =>
         props.expenses.data.length > 0 &&
         selectedIds.value.length === props.expenses.data.length,
+);
+
+// La selección masiva aplica solo a la página visible: al cambiar de página o
+// de filtros se limpia para no arrastrar IDs que ya no están en pantalla.
+watch(
+    () => props.expenses.data.map((expense) => expense.id).join(','),
+    () => {
+        selectedIds.value = [];
+    },
 );
 
 const toggleAll = () => {
@@ -581,7 +588,8 @@ const assignSelected = () => {
                 class="mb-4 flex flex-col items-start gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 md:flex-row md:items-center"
             >
                 <span class="text-sm text-zinc-300">
-                    {{ selectedIds.length }} gasto(s) seleccionado(s)
+                    {{ selectedIds.length }} gasto(s) seleccionado(s) de esta
+                    página
                 </span>
                 <Select v-model="bulkEventId">
                     <SelectTrigger
@@ -634,6 +642,7 @@ const assignSelected = () => {
                                     <TableHead class="w-10">
                                         <Checkbox
                                             :model-value="allSelected"
+                                            aria-label="Seleccionar los gastos de esta página"
                                             class="border-zinc-600"
                                             @update:model-value="toggleAll"
                                         />
@@ -768,6 +777,18 @@ const assignSelected = () => {
                             </TableBody>
                         </Table>
                     </div>
+
+                    <Pagination
+                        :current-page="expenses.current_page"
+                        :last-page="expenses.last_page"
+                        :total="expenses.total"
+                        :from="expenses.from"
+                        :to="expenses.to"
+                        :prev-url="expenses.prev_page_url"
+                        :next-url="expenses.next_page_url"
+                        :links="expenses.links"
+                        items-label="gastos"
+                    />
                 </CardContent>
             </Card>
 

@@ -175,3 +175,28 @@ export interface LoanPayment {
     date: string;
     note: string | null;
 }
+
+/** Un enlace del paginador de Laravel (`paginate()->withQueryString()`). */
+export interface PaginationLink {
+    url: string | null;
+    /** Puede ser un número, "..." o el HTML de anterior/siguiente. */
+    label: string;
+    active: boolean;
+}
+
+/** Respuesta `LengthAwarePaginator` serializada por Inertia. */
+export interface Paginator<T> {
+    data: T[];
+    links: PaginationLink[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+    path: string;
+}

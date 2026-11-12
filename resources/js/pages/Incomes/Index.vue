@@ -5,8 +5,9 @@ import { ChevronDown } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import CurrencyInput from '@/components/CurrencyInput.vue';
 import CategoryCombobox from '@/components/CategoryCombobox.vue';
+import Pagination from '@/components/Pagination.vue';
 import type { BreadcrumbItem } from '@/types';
-import type { Category, Income } from '@/types/finances';
+import type { Category, Income, Paginator } from '@/types/finances';
 import { useFormatter } from '@/composables/useFormatter';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,10 +53,7 @@ import {
 const { formatCurrency, formatDate, toDateInput } = useFormatter();
 
 const props = defineProps<{
-    incomes: {
-        data: Income[];
-        links: any[];
-    };
+    incomes: Paginator<Income>;
     categories: Category[];
     vaults: { id: number; name: string }[];
     totals: {
@@ -542,6 +540,18 @@ const deleteIncome = (id: number) => {
                             </TableBody>
                         </Table>
                     </div>
+
+                    <Pagination
+                        :current-page="incomes.current_page"
+                        :last-page="incomes.last_page"
+                        :total="incomes.total"
+                        :from="incomes.from"
+                        :to="incomes.to"
+                        :prev-url="incomes.prev_page_url"
+                        :next-url="incomes.next_page_url"
+                        :links="incomes.links"
+                        items-label="ingresos"
+                    />
                 </CardContent>
             </Card>
 
