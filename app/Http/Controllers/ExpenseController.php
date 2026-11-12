@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Card;
 use App\Models\Category;
+use App\Models\Event;
 use App\Models\Expense;
 use App\Models\Vault;
 use App\Services\ExpenseService;
@@ -15,7 +16,7 @@ class ExpenseController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Expense::with(['category', 'vault', 'card']);
+        $query = Expense::with(['category', 'vault', 'card', 'event']);
 
         // 1. Filtro de Búsqueda (Descripción)
         if ($request->filled('search')) {
@@ -77,6 +78,9 @@ class ExpenseController extends Controller
         $categories = Category::active()->ofType('expense')->get(['id', 'name']);
         $vaults = Vault::orderBy('name')->get(['id', 'name']);
         $cards = Card::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        // Los eventos finalizados siguen disponibles para registrar gastos
+        // posteriores, por eso se listan todos (los activos primero).
+        $events = Event::orderBy('archived_at')->orderBy('name')->get(['id', 'name', 'archived_at']);
 
         // Años con datos (más el actual) para poblar el submenú de mes específico.
         $earliestDate = Expense::min('date');
@@ -88,10 +92,12 @@ class ExpenseController extends Controller
             'categories' => $categories,
             'vaults' => $vaults,
             'cards' => $cards,
+            'events' => $events,
             'totals' => $totals,
             'available_years' => $availableYears,
             'filters' => $request->only(['search', 'category_id', 'card_id', 'date_filter']), // Regresamos el estado
             'open_create' => $request->boolean('new'),
+            'prefill_event_id' => $request->input('event_id'),
         ]);
     }
 
@@ -118,12 +124,30 @@ class ExpenseController extends Controller
     }
 
     /**
+     * Asigna (o quita) un evento a varios gastos a la vez.
+     */
+    public function assignEvent(Request $request)
+    {
+        $validated = $request->validate([
+            'expense_ids' => 'required|array|min:1',
+            'expense_ids.*' => 'integer|exists:expenses,id',
+            'event_id' => 'nullable|exists:events,id',
+        ]);
+
+        Expense::whereIn('id', $validated['expense_ids'])
+            ->update(['event_id' => $validated['event_id'] ?? null]);
+
+        return redirect()->back()->with('success', 'Gastos asignados al evento.');
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function validatedData(Request $request): array
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
+            'event_id' => 'nullable|exists:events,id',
             'vault_id' => 'nullable|exists:vaults,id',
             'card_id' => 'nullable|exists:cards,id',
             'amount' => 'required|numeric|min:0.01',

@@ -23,6 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Gastos
     Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses.index');
     Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+    Route::post('/expenses/assign-event', [ExpenseController::class, 'assignEvent'])->name('expenses.assign-event');
     Route::put('/expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
     Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
 

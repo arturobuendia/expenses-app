@@ -60,6 +60,7 @@ const props = defineProps<{
     categories: Category[];
     vaults: { id: number; name: string }[];
     cards: { id: number; name: string }[];
+    events: { id: number; name: string; archived_at: string | null }[];
     totals: {
         total_amount: number;
         transaction_count: number;
@@ -76,6 +77,7 @@ const props = defineProps<{
     };
     available_years: number[];
     open_create?: boolean;
+    prefill_event_id?: number | string | null;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -170,6 +172,8 @@ const form = useForm({
     date: new Date().toISOString().split('T')[0],
     is_transfer: false,
     installment_count: '1',
+    belongs_to_event: false,
+    event_id: '',
 });
 
 const openModal = (expense?: Expense) => {
@@ -184,6 +188,8 @@ const openModal = (expense?: Expense) => {
         form.date = toDateInput(expense.date);
         form.is_transfer = expense.is_transfer;
         form.installment_count = expense.installment_count.toString();
+        form.belongs_to_event = expense.event_id !== null;
+        form.event_id = expense.event_id ? expense.event_id.toString() : '';
     } else {
         isEditing.value = false;
         editingId.value = null;
@@ -192,6 +198,8 @@ const openModal = (expense?: Expense) => {
         form.card_id = 'none';
         form.is_transfer = false;
         form.installment_count = '1';
+        form.belongs_to_event = false;
+        form.event_id = '';
         form.date = new Date().toISOString().split('T')[0];
     }
     isModalOpen.value = true;
@@ -209,25 +217,42 @@ const closeModal = () => {
 onMounted(() => {
     if (props.open_create) {
         openModal();
+
+        // Atajo desde el detalle de un evento: pre-marca la asociación.
+        if (props.prefill_event_id) {
+            form.belongs_to_event = true;
+            form.event_id = String(props.prefill_event_id);
+        }
     }
 });
 
 const submitForm = () => {
+    if (form.belongs_to_event && form.event_id === '') {
+        form.setError('event_id', 'Selecciona un evento.');
+        return;
+    }
+
     const usesCard = form.card_id !== 'none';
 
-    form.transform((data) => ({
-        ...data,
-        card_id: data.card_id === 'none' ? null : data.card_id,
-        // Un cargo o sale de la bóveda o se debe en la tarjeta, nunca ambos.
-        vault_id:
-            data.vault_id === 'none' || (usesCard && !data.is_transfer)
-                ? null
-                : data.vault_id,
-        // Una transferencia sin bóveda no tendría de dónde restar.
-        is_transfer: data.vault_id !== 'none' && data.is_transfer,
-        installment_count:
-            usesCard && !data.is_transfer ? data.installment_count : '1',
-    }));
+    form.transform((data) => {
+        const { belongs_to_event, ...rest } = data;
+
+        return {
+            ...rest,
+            card_id: rest.card_id === 'none' ? null : rest.card_id,
+            // Un cargo o sale de la bóveda o se debe en la tarjeta, nunca ambos.
+            vault_id:
+                rest.vault_id === 'none' || (usesCard && !rest.is_transfer)
+                    ? null
+                    : rest.vault_id,
+            // Una transferencia sin bóveda no tendría de dónde restar.
+            is_transfer: rest.vault_id !== 'none' && rest.is_transfer,
+            installment_count:
+                usesCard && !rest.is_transfer ? rest.installment_count : '1',
+            event_id:
+                belongs_to_event && rest.event_id !== '' ? rest.event_id : null,
+        };
+    });
 
     if (isEditing.value && editingId.value) {
         form.put(`/expenses/${editingId.value}`, {
@@ -244,6 +269,49 @@ const deleteExpense = (id: number) => {
     if (confirm('¿Estás seguro de eliminar este gasto?')) {
         router.delete(`/expenses/${id}`);
     }
+};
+
+const selectedIds = ref<number[]>([]);
+const bulkEventId = ref('none');
+
+const allSelected = computed(
+    () =>
+        props.expenses.data.length > 0 &&
+        selectedIds.value.length === props.expenses.data.length,
+);
+
+const toggleAll = () => {
+    selectedIds.value = allSelected.value
+        ? []
+        : props.expenses.data.map((expense) => expense.id);
+};
+
+const toggleSelected = (id: number) => {
+    selectedIds.value = selectedIds.value.includes(id)
+        ? selectedIds.value.filter((value) => value !== id)
+        : [...selectedIds.value, id];
+};
+
+const assignSelected = () => {
+    if (selectedIds.value.length === 0) {
+        return;
+    }
+
+    router.post(
+        '/expenses/assign-event',
+        {
+            expense_ids: selectedIds.value,
+            event_id: bulkEventId.value === 'none' ? null : bulkEventId.value,
+        },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                selectedIds.value = [];
+                bulkEventId.value = 'none';
+                refreshData();
+            },
+        },
+    );
 };
 </script>
 
@@ -508,6 +576,51 @@ const deleteExpense = (id: number) => {
                 </Card>
             </div>
 
+            <div
+                v-if="selectedIds.length > 0"
+                class="mb-4 flex flex-col items-start gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 md:flex-row md:items-center"
+            >
+                <span class="text-sm text-zinc-300">
+                    {{ selectedIds.length }} gasto(s) seleccionado(s)
+                </span>
+                <Select v-model="bulkEventId">
+                    <SelectTrigger
+                        class="w-full border-zinc-800 bg-zinc-950 text-zinc-200 focus:ring-zinc-500 md:w-64"
+                    >
+                        <SelectValue placeholder="Selecciona un evento" />
+                    </SelectTrigger>
+                    <SelectContent
+                        class="border-zinc-800 bg-zinc-950 text-zinc-100"
+                    >
+                        <SelectGroup>
+                            <SelectItem
+                                value="none"
+                                class="focus:bg-zinc-800 focus:text-zinc-100"
+                            >
+                                Sin evento (quitar)
+                            </SelectItem>
+                            <SelectItem
+                                v-for="event in events"
+                                :key="event.id"
+                                :value="event.id.toString()"
+                                class="focus:bg-zinc-800 focus:text-zinc-100"
+                            >
+                                {{ event.name
+                                }}{{ event.archived_at ? ' (finalizado)' : '' }}
+                            </SelectItem>
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                <Button @click="assignSelected"> Asignar </Button>
+                <Button
+                    variant="ghost"
+                    @click="selectedIds = []"
+                    class="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                >
+                    Limpiar
+                </Button>
+            </div>
+
             <Card class="border-zinc-800 bg-zinc-900 text-zinc-100">
                 <CardContent class="p-0">
                     <div class="overflow-x-auto">
@@ -518,6 +631,13 @@ const deleteExpense = (id: number) => {
                                 <TableRow
                                     class="border-zinc-800 hover:bg-transparent"
                                 >
+                                    <TableHead class="w-10">
+                                        <Checkbox
+                                            :model-value="allSelected"
+                                            class="border-zinc-600"
+                                            @update:model-value="toggleAll"
+                                        />
+                                    </TableHead>
                                     <TableHead class="font-medium text-zinc-400"
                                         >Fecha</TableHead
                                     >
@@ -546,6 +666,17 @@ const deleteExpense = (id: number) => {
                                     :key="expense.id"
                                     class="border-zinc-800 transition-colors hover:bg-zinc-800/50"
                                 >
+                                    <TableCell class="w-10">
+                                        <Checkbox
+                                            :model-value="
+                                                selectedIds.includes(expense.id)
+                                            "
+                                            class="border-zinc-600"
+                                            @update:model-value="
+                                                toggleSelected(expense.id)
+                                            "
+                                        />
+                                    </TableCell>
                                     <TableCell
                                         class="whitespace-nowrap text-zinc-400"
                                         >{{ formatDate(expense.date) }}
@@ -591,6 +722,12 @@ const deleteExpense = (id: number) => {
                                         >
                                             {{ expense.installment_count }} MSI
                                         </span>
+                                        <span
+                                            v-if="expense.event"
+                                            class="ml-2 inline-flex items-center rounded-md bg-teal-500/10 px-2 py-1 text-xs font-medium text-teal-300 ring-1 ring-teal-500/20 ring-inset"
+                                        >
+                                            {{ expense.event.name }}
+                                        </span>
                                     </TableCell>
                                     <TableCell
                                         class="text-right font-mono font-medium text-red-400 tabular-nums"
@@ -621,7 +758,7 @@ const deleteExpense = (id: number) => {
                                     class="border-zinc-800 hover:bg-transparent"
                                 >
                                     <TableCell
-                                        colspan="6"
+                                        colspan="7"
                                         class="py-8 text-center text-zinc-500"
                                     >
                                         No se encontraron gastos con estos
@@ -862,6 +999,65 @@ const deleteExpense = (id: number) => {
                                     del mes.
                                 </p>
                             </div>
+                        </div>
+
+                        <div
+                            class="flex items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3"
+                        >
+                            <Checkbox
+                                id="belongs_to_event"
+                                v-model="form.belongs_to_event"
+                                class="mt-0.5 border-zinc-600"
+                            />
+                            <div class="space-y-1">
+                                <Label
+                                    for="belongs_to_event"
+                                    class="cursor-pointer text-sm font-medium text-zinc-200"
+                                >
+                                    Este gasto pertenece a un evento
+                                </Label>
+                                <!-- <p class="text-xs text-zinc-500">
+                                    Úsalo para agrupar gastos de unas
+                                    vacaciones, un viaje o un plan.
+                                </p> -->
+                            </div>
+                        </div>
+
+                        <div v-if="form.belongs_to_event" class="space-y-2">
+                            <Label class="text-zinc-400">Evento</Label>
+                            <Select v-model="form.event_id" required>
+                                <SelectTrigger
+                                    class="border-zinc-800 bg-zinc-900 text-zinc-100 focus:ring-zinc-500"
+                                >
+                                    <SelectValue
+                                        placeholder="Selecciona un evento"
+                                    />
+                                </SelectTrigger>
+                                <SelectContent
+                                    class="border-zinc-800 bg-zinc-950 text-zinc-100"
+                                >
+                                    <SelectGroup>
+                                        <SelectItem
+                                            v-for="event in events"
+                                            :key="event.id"
+                                            :value="event.id.toString()"
+                                            class="focus:bg-zinc-800 focus:text-zinc-100"
+                                        >
+                                            {{ event.name
+                                            }}{{
+                                                event.archived_at
+                                                    ? ' (finalizado)'
+                                                    : ''
+                                            }}
+                                        </SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            <span
+                                v-if="form.errors.event_id"
+                                class="text-xs text-red-500"
+                                >{{ form.errors.event_id }}</span
+                            >
                         </div>
 
                         <DialogFooter
