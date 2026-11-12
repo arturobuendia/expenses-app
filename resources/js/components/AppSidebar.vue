@@ -9,6 +9,7 @@ import {
     Repeat,
     FileText,
     Wallet,
+    CalendarDays,
 } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as expenses } from '@/routes/expenses';
+import { index as events } from '@/routes/events';
 import { index as incomes } from '@/routes/incomes';
 import { index as vaults } from '@/routes/vaults';
 import { index as cards } from '@/routes/cards';
@@ -42,6 +44,11 @@ const mainNavItems: NavItem[] = [
         title: 'Gastos',
         href: expenses(),
         icon: CreditCard,
+    },
+    {
+        title: 'Eventos',
+        href: events(),
+        icon: CalendarDays,
     },
     {
         title: 'Ingresos',

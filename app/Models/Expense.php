@@ -10,6 +10,7 @@ class Expense extends Model
 {
     protected $fillable = [
         'category_id',
+        'event_id',
         'vault_id',
         'card_id',
         'card_statement_id',
@@ -34,6 +35,11 @@ class Expense extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(Event::class);
     }
 
     public function vault(): BelongsTo

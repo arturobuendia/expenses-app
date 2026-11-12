@@ -18,6 +18,7 @@ export interface Vault {
 export interface Expense {
     id: number;
     category_id: number;
+    event_id: number | null;
     vault_id: number | null;
     card_id: number | null;
     card_statement_id: number | null;
@@ -27,8 +28,42 @@ export interface Expense {
     is_transfer: boolean;
     installment_count: number;
     category: Category;
+    event?: FinanceEvent | null;
     vault?: Vault | null;
     card?: Card | null;
+}
+
+export interface FinanceEvent {
+    id: number;
+    name: string;
+    description: string | null;
+    starts_at: string | null;
+    ends_at: string | null;
+    budget: number | string | null;
+    archived_at: string | null;
+    /** Total gastado calculado por el backend (sin transferencias). */
+    spent?: number;
+    /** Presupuesto menos lo gastado; null si no hay presupuesto. */
+    remaining_budget?: number | null;
+    is_archived?: boolean;
+    expenses_count?: number;
+    expenses?: Expense[];
+}
+
+export interface EventCategorySummary {
+    category: string;
+    total: number;
+}
+
+export interface EventDaySummary {
+    date: string;
+    total: number;
+}
+
+export interface EventPaymentMethodSummary {
+    card: number;
+    vault: number;
+    none: number;
 }
 
 export interface CardStatement {
