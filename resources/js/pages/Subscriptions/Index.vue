@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import CurrencyInput from '@/components/CurrencyInput.vue';
+import CategoryCombobox from '@/components/CategoryCombobox.vue';
 import type { BreadcrumbItem } from '@/types';
 import type { Subscription, Category } from '@/types/finances';
 import { useFormatter } from '@/composables/useFormatter';
@@ -447,27 +448,11 @@ const deleteSubscription = (id: number) => {
                                 <Label class="text-zinc-400"
                                     >Categoría del gasto</Label
                                 >
-                                <Select v-model="form.category_id" required>
-                                    <SelectTrigger
-                                        class="border-zinc-800 bg-zinc-900 text-zinc-100 focus:ring-zinc-500"
-                                    >
-                                        <SelectValue placeholder="Categoría" />
-                                    </SelectTrigger>
-                                    <SelectContent
-                                        class="border-zinc-800 bg-zinc-950 text-zinc-100"
-                                    >
-                                        <SelectGroup>
-                                            <SelectItem
-                                                v-for="cat in categories"
-                                                :key="cat.id"
-                                                :value="cat.id.toString()"
-                                                class="focus:bg-zinc-800 focus:text-zinc-100"
-                                            >
-                                                {{ cat.name }}
-                                            </SelectItem>
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
+                                <CategoryCombobox
+                                    v-model="form.category_id"
+                                    :categories="categories"
+                                    placeholder="Categoría"
+                                />
                                 <span
                                     v-if="form.errors.category_id"
                                     class="text-xs text-red-500"

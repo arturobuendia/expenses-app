@@ -4,6 +4,7 @@ import { Head, useForm, router } from '@inertiajs/vue3';
 import { ChevronDown } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import CurrencyInput from '@/components/CurrencyInput.vue';
+import CategoryCombobox from '@/components/CategoryCombobox.vue';
 import type { BreadcrumbItem } from '@/types';
 import type { Category, Income } from '@/types/finances';
 import { useFormatter } from '@/composables/useFormatter';
@@ -286,32 +287,13 @@ const deleteIncome = (id: number) => {
                     />
                 </div>
 
-                <Select v-model="activeFilters.category_id">
-                    <SelectTrigger
-                        class="w-full border-zinc-800 bg-zinc-950 text-zinc-200 focus:ring-zinc-500 md:w-50"
-                    >
-                        <SelectValue placeholder="Todas las Categorías" />
-                    </SelectTrigger>
-                    <SelectContent
-                        class="border-zinc-800 bg-zinc-950 text-zinc-100"
-                    >
-                        <SelectGroup>
-                            <SelectItem
-                                value="all"
-                                class="focus:bg-zinc-800 focus:text-zinc-100"
-                                >Todas las Categorías</SelectItem
-                            >
-                            <SelectItem
-                                v-for="cat in categories"
-                                :key="cat.id"
-                                :value="cat.id.toString()"
-                                class="focus:bg-zinc-800 focus:text-zinc-100"
-                            >
-                                {{ cat.name }}
-                            </SelectItem>
-                        </SelectGroup>
-                    </SelectContent>
-                </Select>
+                <CategoryCombobox
+                    v-model="activeFilters.category_id"
+                    :categories="categories"
+                    placeholder="Todas las Categorías"
+                    allow-all
+                    trigger-class="bg-zinc-950 text-zinc-200 md:w-50"
+                />
 
                 <DropdownMenu>
                     <DropdownMenuTrigger as-child>
@@ -634,29 +616,11 @@ const deleteIncome = (id: number) => {
 
                         <div class="space-y-2">
                             <Label class="text-zinc-400">Categoría</Label>
-                            <Select v-model="form.category_id" required>
-                                <SelectTrigger
-                                    class="border-zinc-800 bg-zinc-900 text-zinc-100 focus:ring-zinc-500"
-                                >
-                                    <SelectValue
-                                        placeholder="Selecciona una categoría"
-                                    />
-                                </SelectTrigger>
-                                <SelectContent
-                                    class="border-zinc-800 bg-zinc-950 text-zinc-100"
-                                >
-                                    <SelectGroup>
-                                        <SelectItem
-                                            v-for="cat in categories"
-                                            :key="cat.id"
-                                            :value="cat.id.toString()"
-                                            class="focus:bg-zinc-800 focus:text-zinc-100"
-                                        >
-                                            {{ cat.name }}
-                                        </SelectItem>
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
+                            <CategoryCombobox
+                                v-model="form.category_id"
+                                :categories="categories"
+                                placeholder="Selecciona una categoría"
+                            />
                             <span
                                 v-if="form.errors.category_id"
                                 class="text-xs text-red-500"
