@@ -219,5 +219,8 @@ class DatabaseSeeder extends Seeder
             'date' => $now->copy()->subDays(24),
             'is_paid' => false,
         ]);
+
+        // 7. Eventos de ejemplo con sus gastos
+        $this->call(EventDemoSeeder::class);
     }
 }
