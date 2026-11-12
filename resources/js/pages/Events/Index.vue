@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import CurrencyInput from '@/components/CurrencyInput.vue';
 import type { BreadcrumbItem } from '@/types';
 import type { FinanceEvent } from '@/types/finances';
 import { useFormatter } from '@/composables/useFormatter';
@@ -432,14 +433,11 @@ const formatRemaining = (event: FinanceEvent): string => {
                                     >(Opcional)</span
                                 ></Label
                             >
-                            <Input
+                            <CurrencyInput
                                 id="budget"
                                 v-model="form.budget"
-                                type="number"
-                                step="0.01"
-                                min="0"
                                 class="border-zinc-800 bg-zinc-900 text-zinc-100 focus-visible:ring-zinc-500"
-                                placeholder="Sin límite"
+                                placeholder="$0.00"
                             />
                             <span
                                 v-if="form.errors.budget"
