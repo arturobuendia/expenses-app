@@ -89,6 +89,14 @@ const features = [
                                 Comenzar ahora
                             </Link>
                         </li>
+                        <li>
+                            <Link
+                                href="/demo"
+                                class="inline-block rounded-sm border border-[#7036d1] px-5 py-1.5 text-sm leading-normal text-[#7036d1] hover:bg-[#7036d1] hover:text-white dark:border-[#a78bfa] dark:text-[#a78bfa] dark:hover:bg-[#a78bfa] dark:hover:text-[#1b1b18]"
+                            >
+                                Ver demo
+                            </Link>
+                        </li>
                     </ul>
                 </div>
                 <div

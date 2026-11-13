@@ -45,6 +45,8 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // Se resuelve al renderizar: DemoMode corre después de este middleware.
+            'demo' => fn (): bool => (bool) $request->attributes->get('demo', false),
         ];
     }
 }

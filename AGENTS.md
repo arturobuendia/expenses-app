@@ -40,3 +40,5 @@ Tests run on SQLite `:memory:` with `RefreshDatabase` applied to every `tests/Fe
 - Timezone is `America/Mexico_City`; `APP_LOCALE` is `en` while product copy stays Spanish.
 - `AppServiceProvider` blocks destructive DB commands in production and enforces stronger password rules there.
 - `resources/js/pages/Dashboard.vue` is an unused starter leftover; the live dashboard is `pages/Dashboard/Index.vue`.
+- The public demo (`/demo`) runs the same routes against the separate `demo` SQLite connection via `DemoMode`; never authenticate the demo with `Auth::login()` (sessions live in the real DB and the demo user id collides with the owner), use `Auth::onceUsingId()`. `DemoMode` must stay in the middleware priority list before `Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests`, or `auth` redirects to login first. `DemoThrottle` runs before `DemoMode` on purpose: its counters must live in the real cache, not in the demo database that gets rebuilt weekly.
+- `demo:refresh` builds the file on a temp path and renames it; in tests, purge the `demo`/`demo_build` connections before deleting the file (Windows cannot unlink an open SQLite file).

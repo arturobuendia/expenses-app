@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { LogOut, ListPlus, Settings } from 'lucide-vue-next';
+import { computed } from 'vue';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -15,6 +16,9 @@ import type { User } from '@/types';
 type Props = {
     user: User;
 };
+
+const page = usePage();
+const isDemo = computed(() => page.props.demo === true);
 
 const handleLogout = () => {
     router.flushAll();
@@ -41,7 +45,7 @@ defineProps<Props>();
                 Acciones por lote
             </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem :as-child="true">
+        <DropdownMenuItem v-if="!isDemo" :as-child="true">
             <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
                 <Settings class="mr-2 h-4 w-4" />
                 Settings
@@ -52,13 +56,13 @@ defineProps<Props>();
     <DropdownMenuItem :as-child="true">
         <Link
             class="block w-full cursor-pointer"
-            :href="logout()"
+            :href="isDemo ? '/demo/exit' : logout()"
             @click="handleLogout"
             as="button"
             data-test="logout-button"
         >
             <LogOut class="mr-2 h-4 w-4" />
-            Log out
+            {{ isDemo ? 'Salir de la demo' : 'Log out' }}
         </Link>
     </DropdownMenuItem>
 </template>

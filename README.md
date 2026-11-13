@@ -167,6 +167,25 @@ Crea bóvedas, categorías, gastos, ingresos, una tarjeta de crédito, suscripci
 
 ---
 
+## 🧪 Demo pública
+
+La portada (`/`) tiene un botón **Ver demo** que entra a la app con datos de ejemplo, sin cuenta y con escritura habilitada.
+
+- La demo corre sobre **su propia base de datos SQLite** (conexión `demo`, archivo en `DEMO_DB_PATH`, por defecto `database/demo.sqlite`), así que nunca toca los datos reales.
+- Se reconstruye con `php artisan demo:refresh`. El comando arma el archivo nuevo aparte y lo intercambia de forma atómica, para que nadie vea errores mientras se regenera.
+- `routes/console.php` la reinicia todos los lunes a las 04:00. En producción necesitas el cron de `php artisan schedule:run`.
+- Cada IP tiene cupo de 20 escrituras y 120 peticiones por minuto (`config/demo.php`). Al pasarse, la IP queda bloqueada una hora, también para lecturas; los contadores viven en la caché real, así que sobreviven al reinicio.
+- El visitante se autentica por request con `Auth::onceUsingId()`: la sesión real nunca queda autenticada.
+
+En un despliegue con el sistema de archivos efímero (por ejemplo Coolify), apunta la demo al volumen persistente y créala en el pre-deploy:
+
+```bash
+DEMO_DB_PATH=/data/demo.sqlite
+php artisan demo:refresh   # solo si el archivo no existe todavía
+```
+
+---
+
 ## ✅ Tests y calidad
 
 ```bash

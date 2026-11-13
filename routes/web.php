@@ -4,6 +4,7 @@ use App\Http\Controllers\BatchExpenseController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DemoController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\IncomeController;
@@ -14,7 +15,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home')->middleware('guest');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+// Demo pública: la misma app sobre la conexión "demo" (ver DemoMode).
+Route::get('/demo', [DemoController::class, 'start'])->middleware('throttle:20,1')->name('demo.start');
+Route::get('/demo/exit', [DemoController::class, 'stop'])->name('demo.exit');
+
+Route::middleware(['demo.throttle', 'demo', 'auth', 'verified'])->group(function () {
     // Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 
     // Dashboard
