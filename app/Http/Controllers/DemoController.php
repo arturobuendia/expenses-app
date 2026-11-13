@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\DemoDatabase;
 use Illuminate\Http\RedirectResponse;
 
 class DemoController extends Controller
@@ -11,9 +12,7 @@ class DemoController extends Controller
      */
     public function start(): RedirectResponse
     {
-        $database = config('database.connections.demo.database');
-
-        if (! is_string($database) || ! is_file($database)) {
+        if (! DemoDatabase::ensureExists()) {
             abort(503, 'La demo todavía se está preparando. Vuelve a intentarlo en unos minutos.');
         }
 

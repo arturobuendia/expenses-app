@@ -48,8 +48,12 @@ function closeDemoConnections(): void
     DB::purge('demo_build');
 }
 
-test('la entrada a la demo falla si la base de datos no existe', function () {
-    $this->get('/demo')->assertStatus(503);
+test('la demo se construye sola cuando la base de datos no existe', function () {
+    expect(demoDatabasePath())->not->toBeFile();
+
+    $this->get('/demo')->assertRedirect(route('dashboard'));
+
+    expect(demoDatabasePath())->toBeFile();
 });
 
 test('sin la cookie de demo el dashboard sigue pidiendo login', function () {

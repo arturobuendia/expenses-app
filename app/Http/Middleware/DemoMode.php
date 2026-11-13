@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Support\DemoDatabase;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,9 +30,7 @@ class DemoMode
             return $next($request);
         }
 
-        $database = config('database.connections.demo.database');
-
-        if (! is_string($database) || ! is_file($database)) {
+        if (! DemoDatabase::ensureExists()) {
             abort(503, 'La demo todavía se está preparando. Vuelve a intentarlo en unos minutos.');
         }
 

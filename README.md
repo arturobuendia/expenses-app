@@ -176,12 +176,22 @@ La portada (`/`) tiene un botón **Ver demo** que entra a la app con datos de ej
 - `routes/console.php` la reinicia todos los lunes a las 04:00. En producción necesitas el cron de `php artisan schedule:run`.
 - Cada IP tiene cupo de 20 escrituras y 120 peticiones por minuto (`config/demo.php`). Al pasarse, la IP queda bloqueada una hora, también para lecturas; los contadores viven en la caché real, así que sobreviven al reinicio.
 - El visitante se autentica por request con `Auth::onceUsingId()`: la sesión real nunca queda autenticada.
+- La base de la demo es desechable: vive en `database/demo.sqlite` y **se construye sola** en la primera visita si el archivo no existe (`DemoDatabase::ensureExists()`, unos 2 segundos). No necesita volumen persistente ni paso de deploy.
 
-En un despliegue con el sistema de archivos efímero (por ejemplo Coolify), apunta la demo al volumen persistente y créala en el pre-deploy:
+---
+
+## 🧪 Demo en producción
+
+Nada especial: como el archivo no importa, no hace falta montarlo en un volumen. En un contenedor con filesystem efímero (Coolify, Nixpacks) cada deploy lo borra y la primera visita lo vuelve a crear. Si prefieres que el primer visitante no pague esos dos segundos, corre el comando en el pre-deploy:
 
 ```bash
-DEMO_DB_PATH=/data/demo.sqlite
-php artisan demo:refresh   # solo si el archivo no existe todavía
+php artisan demo:refresh
+```
+
+Y para el reinicio semanal:
+
+```cron
+* * * * * cd /app && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 ---
