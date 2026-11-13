@@ -44,6 +44,21 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
+        /*
+         * Base de datos de la demo pública. Se reconstruye con `demo:refresh`
+         * y nunca debe apuntar al archivo de producción.
+         */
+        'demo' => [
+            'driver' => 'sqlite',
+            'database' => env('DEMO_DB_PATH', database_path('demo.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+            'busy_timeout' => 5000,
+            'journal_mode' => null,
+            'synchronous' => null,
+            'transaction_mode' => 'DEFERRED',
+        ],
+
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),
